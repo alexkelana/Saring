@@ -1,0 +1,153 @@
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-background: #0b0c0a;
+  --color-foreground: #efece4;
+  --color-card: #141512;
+  --color-card-foreground: #efece4;
+  --color-popover: #1c1d19;
+  --color-popover-foreground: #efece4;
+  --color-primary: #c5cfc4;
+  --color-primary-foreground: #0b0c0a;
+  --color-secondary: #1c1d19;
+  --color-secondary-foreground: #efece4;
+  --color-muted: #1c1d19;
+  --color-muted-foreground: #9c9a91;
+  --color-accent: #23241f;
+  --color-accent-foreground: #efece4;
+  --color-border: #2a2b26;
+  --color-input: #2a2b26;
+  --color-ring: #c5cfc4;
+  --color-up: #7d9e86;
+  --color-down: #c46b5d;
+  --color-warn: #c4a574;
+  --color-hairline: color-mix(in oklab, var(--color-foreground) 12%, transparent);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+  --radius-2xl: 32px;
+
+  --shadow-border: 0 0 0 1px color-mix(in oklab, var(--color-foreground) 8%, transparent);
+  --shadow-border-hover: 0 0 0 1px color-mix(in oklab, var(--color-foreground) 14%, transparent);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+@keyframes saring-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes saring-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.saring-enter {
+  animation: saring-rise 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.saring-enter-2 {
+  animation: saring-rise 400ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.saring-enter-3 {
+  animation: saring-rise 400ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--color-muted-foreground) 0%,
+    var(--color-foreground) 45%,
+    var(--color-muted-foreground) 90%
+  );
+  background-size: 200% 100%;
+  animation: saring-shimmer 1.8s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saring-enter,
+  .saring-enter-2,
+  .saring-enter-3,
+  .shimmer-text {
+    animation: none;
+    color: var(--color-muted-foreground);
+    filter: none;
+    transform: none;
+  }
+
+  body::before {
+    display: none;
+  }
+}

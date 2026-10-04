@@ -1,0 +1,833 @@
+import { i as __toESM } from "../_runtime.mjs";
+import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
+import { i as require_jsx_runtime, n as useQuery, t as useMutation } from "../_libs/react+tanstack__react-query.mjs";
+import { n as TSS_SERVER_FUNCTION, r as getServerFnById, t as createServerFn } from "./ssr.mjs";
+import { i as UNIVERSE, n as STRATEGIES, r as STRATEGY_ORDER, t as SECTORS } from "./universe-DbDHsdq7.mjs";
+import { a as string, i as object, t as _enum } from "../_libs/zod.mjs";
+import { a as LoaderCircle, i as Search, o as ArrowUpRight, r as Star, t as X } from "../_libs/lucide-react.mjs";
+import { n as toast } from "../_libs/sonner.mjs";
+import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
+import { t as twMerge } from "../_libs/tailwind-merge.mjs";
+import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
+import { n as create, t as persist } from "../_libs/zustand.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-32bZ3fCm.js
+var import_react = /* @__PURE__ */ __toESM(require_react());
+var import_jsx_runtime = require_jsx_runtime();
+function cn(...inputs) {
+	return twMerge(clsx(inputs));
+}
+function ScoreRing({ value, size = 52, className }) {
+	const r = 18;
+	const c = 2 * Math.PI * r;
+	const pct = Math.min(100, Math.max(0, value));
+	const dash = pct / 100 * c;
+	const tone = pct >= 72 ? "var(--color-up)" : pct >= 58 ? "var(--color-warn)" : "var(--color-muted-foreground)";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: cn("relative grid place-items-center", className),
+		style: {
+			width: size,
+			height: size
+		},
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+			viewBox: "0 0 44 44",
+			className: "size-full -rotate-90",
+			"aria-hidden": "true",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+				cx: "22",
+				cy: "22",
+				r,
+				fill: "none",
+				stroke: "var(--color-border)",
+				strokeWidth: "3.5"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+				cx: "22",
+				cy: "22",
+				r,
+				fill: "none",
+				stroke: tone,
+				strokeWidth: "3.5",
+				strokeLinecap: "round",
+				strokeDasharray: `${dash} ${c}`
+			})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "absolute font-mono text-[13px] font-medium tabular-nums text-foreground",
+			children: Math.round(pct)
+		})]
+	});
+}
+function Sparkline({ values, className, up }) {
+	if (values.length < 2) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: cn("h-8", className) });
+	const min = Math.min(...values);
+	const span = Math.max(...values) - min || 1;
+	const w = 120;
+	const h = 36;
+	const pts = values.map((v, i) => {
+		const x = i / (values.length - 1) * w;
+		const y = h - (v - min) / span * 32 - 2;
+		return `${x.toFixed(1)},${y.toFixed(1)}`;
+	}).join(" ");
+	const last = values[values.length - 1];
+	const first = values[0];
+	const positive = up ?? last >= first;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		viewBox: `0 0 ${w} ${h}`,
+		className: cn("h-8 w-[7.5rem] overflow-visible", className),
+		"aria-hidden": "true",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("polyline", {
+			fill: "none",
+			stroke: positive ? "var(--color-up)" : "var(--color-down)",
+			strokeWidth: "1.6",
+			strokeLinejoin: "round",
+			strokeLinecap: "round",
+			points: pts
+		})
+	});
+}
+var badgeVariants = cva("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide uppercase", {
+	variants: { variant: {
+		default: "bg-secondary text-muted-foreground",
+		beli: "bg-up/15 text-up",
+		pertimbangkan: "bg-warn/15 text-warn",
+		tunggu: "bg-secondary text-muted-foreground",
+		up: "bg-up/15 text-up",
+		down: "bg-down/15 text-down"
+	} },
+	defaultVariants: { variant: "default" }
+});
+function Badge({ className, variant, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+		className: cn(badgeVariants({ variant }), className),
+		...props
+	});
+}
+var buttonVariants = cva("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-[background-color,color,box-shadow,transform,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 disabled:pointer-events-none disabled:opacity-40 active:not-disabled:scale-[0.96] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0", {
+	variants: {
+		variant: {
+			default: "bg-primary text-primary-foreground hover:bg-primary/90",
+			outline: "bg-transparent text-foreground shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-border-hover)] hover:bg-accent",
+			ghost: "bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
+			subtle: "bg-secondary text-secondary-foreground hover:bg-accent"
+		},
+		size: {
+			default: "h-11 px-5",
+			sm: "h-9 px-3.5 text-[13px]",
+			lg: "h-12 px-6",
+			icon: "size-11"
+		}
+	},
+	defaultVariants: {
+		variant: "default",
+		size: "default"
+	}
+});
+function Button({ className, variant, size, asChild = false, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(asChild ? Slot : "button", {
+		className: cn(buttonVariants({
+			variant,
+			size,
+			className
+		})),
+		...props
+	});
+}
+function Separator({ className }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: cn("h-px w-full bg-border", className),
+		role: "separator"
+	});
+}
+function formatPrice(n) {
+	if (!Number.isFinite(n)) return "—";
+	const digits = n >= 1e3 ? 0 : n >= 100 ? 1 : 2;
+	return new Intl.NumberFormat("id-ID", {
+		maximumFractionDigits: digits,
+		minimumFractionDigits: 0
+	}).format(n);
+}
+function formatCompactIDR(n) {
+	if (!Number.isFinite(n) || n === 0) return "0";
+	const abs = Math.abs(n);
+	const sign = n < 0 ? "−" : "";
+	if (abs >= 0xe8d4a51000) return `${sign}${(abs / 0xe8d4a51000).toFixed(abs >= 0x9184e72a000 ? 1 : 2).replace(/\.0+$/, "")} T`;
+	if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(abs >= 1e10 ? 1 : 2).replace(/\.0+$/, "")} M`;
+	if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1).replace(/\.0+$/, "")} jt`;
+	if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1).replace(/\.0+$/, "")} rb`;
+	return `${sign}${Math.round(abs)}`;
+}
+function formatPct(n, digits = 2) {
+	if (!Number.isFinite(n)) return "—";
+	return `${n > 0 ? "+" : ""}${n.toFixed(digits)}%`;
+}
+function formatJakarta(ts) {
+	return new Intl.DateTimeFormat("id-ID", {
+		timeZone: "Asia/Jakarta",
+		weekday: "short",
+		day: "numeric",
+		month: "short",
+		hour: "2-digit",
+		minute: "2-digit",
+		hourCycle: "h23"
+	}).format(new Date(ts));
+}
+var useScreener = create()(persist((set, get) => ({
+	strategy: "swing",
+	sector: "Semua",
+	query: "",
+	result: null,
+	selected: null,
+	watchlist: [],
+	error: null,
+	setStrategy: (strategy) => set({ strategy }),
+	setSector: (sector) => set({ sector }),
+	setQuery: (query) => set({ query }),
+	setResult: (result) => set({
+		result,
+		selected: result?.results[0]?.symbol ?? null,
+		error: null
+	}),
+	setSelected: (selected) => set({ selected }),
+	setError: (error) => set({ error }),
+	toggleWatch: (symbol) => {
+		const cur = get().watchlist;
+		set({ watchlist: cur.includes(symbol) ? cur.filter((s) => s !== symbol) : [...cur, symbol] });
+	}
+}), {
+	name: "saring-v1",
+	partialize: (s) => ({ watchlist: s.watchlist })
+}));
+function FactorBar({ label, value }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "space-y-1.5",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "flex items-baseline justify-between text-xs",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "text-muted-foreground",
+				children: label
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "font-mono tabular-nums text-foreground",
+				children: Math.round(value)
+			})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "h-1 overflow-hidden rounded-full bg-secondary",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: cn("h-full rounded-full transition-[width] duration-500 ease-out", value >= 72 ? "bg-up" : value >= 58 ? "bg-warn" : "bg-muted-foreground/50"),
+				style: { width: `${Math.min(100, Math.max(0, value))}%` }
+			})
+		})]
+	});
+}
+var VERDICT_COPY$1 = {
+	beli: "Layak beli",
+	pertimbangkan: "Pertimbangkan",
+	tunggu: "Tunggu konfirmasi"
+};
+function StockDetail({ stock, onClose }) {
+	const strategy = useScreener((s) => s.strategy);
+	const watchlist = useScreener((s) => s.watchlist);
+	const toggleWatch = useScreener((s) => s.toggleWatch);
+	const saved = watchlist.includes(stock.symbol);
+	const weights = STRATEGIES[strategy].weights;
+	const up = stock.changePct >= 0;
+	const rr = stock.price > stock.levels.stop ? (stock.levels.target - stock.price) / (stock.price - stock.levels.stop) : 0;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex h-full flex-col",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex items-start justify-between gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-wrap items-center gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						className: "font-display text-2xl font-medium tracking-tight text-foreground",
+						children: stock.symbol
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, {
+						variant: stock.verdict,
+						children: VERDICT_COPY$1[stock.verdict]
+					})]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-0.5 text-sm text-muted-foreground",
+					children: stock.name
+				})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex items-center gap-1",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: "ghost",
+						size: "icon",
+						className: "size-10",
+						"aria-label": saved ? "Hapus dari watchlist" : "Simpan ke watchlist",
+						onClick: () => toggleWatch(stock.symbol),
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Star, { className: cn("size-4", saved && "fill-primary text-primary") })
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: "ghost",
+						size: "icon",
+						className: "size-10",
+						onClick: onClose,
+						"aria-label": "Tutup",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { className: "size-4" })
+					})]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-4 flex items-end justify-between gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "font-mono text-3xl font-medium tracking-tight tabular-nums",
+					children: formatPrice(stock.price)
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: cn("mt-1 font-mono text-sm tabular-nums", up ? "text-up" : "text-down"),
+					children: formatPct(stock.changePct)
+				})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkline, {
+					values: stock.spark,
+					up,
+					className: "h-10 w-36"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-5 text-sm leading-relaxed text-foreground/90",
+				children: stock.thesis
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "mt-5 grid grid-cols-3 gap-2",
+				children: [
+					{
+						k: "Stop",
+						v: formatPrice(stock.levels.stop)
+					},
+					{
+						k: "Target",
+						v: formatPrice(stock.levels.target)
+					},
+					{
+						k: "R:R",
+						v: rr ? `${rr.toFixed(1)}×` : "—"
+					}
+				].map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "rounded-xl bg-secondary px-3 py-2.5",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+						children: item.k
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 font-mono text-sm tabular-nums",
+						children: item.v
+					})]
+				}, item.k))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Separator, { className: "my-5" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "space-y-3",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FactorBar, {
+						label: `Teknikal · ${Math.round(weights.technical * 100)}%`,
+						value: stock.scores.technical
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FactorBar, {
+						label: `Fundamental · ${Math.round(weights.fundamental * 100)}%`,
+						value: stock.scores.fundamental
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FactorBar, {
+						label: `Sentimen · ${Math.round(weights.sentiment * 100)}%`,
+						value: stock.scores.sentiment
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-sm",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "Sektor",
+						value: stock.sector
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "RSI",
+						value: stock.indicators.rsi != null ? stock.indicators.rsi.toFixed(0) : "—"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "RVOL",
+						value: stock.indicators.rvol != null ? `${stock.indicators.rvol.toFixed(1)}×` : "—"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "Posisi 52w",
+						value: stock.indicators.pos52w != null ? `${stock.indicators.pos52w.toFixed(0)}%` : "—"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "Nilai",
+						value: `Rp ${formatCompactIDR(stock.value)}`
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "Support",
+						value: formatPrice(stock.levels.support)
+					})
+				]
+			}),
+			stock.flags.lq45 || stock.flags.dividend || stock.flags.soe || stock.flags.shariah ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-4 flex flex-wrap gap-1.5",
+				children: [
+					stock.flags.lq45 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, { children: "LQ45" }) : null,
+					stock.flags.idx30 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, { children: "IDX30" }) : null,
+					stock.flags.soe ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, { children: "BUMN" }) : null,
+					stock.flags.dividend ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, { children: "Dividen" }) : null,
+					stock.flags.shariah ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, { children: "Syariah" }) : null
+				]
+			}) : null,
+			stock.reasons.length ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-5",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+					children: "Alasan"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-2 space-y-1.5 text-sm text-foreground/90",
+					children: stock.reasons.map((r) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mt-2 size-1 shrink-0 rounded-full bg-up" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r })]
+					}, r))
+				})]
+			}) : null,
+			stock.risks.length ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-4",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+					children: "Risiko"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-2 space-y-1.5 text-sm text-foreground/90",
+					children: stock.risks.map((r) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mt-2 size-1 shrink-0 rounded-full bg-down" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r })]
+					}, r))
+				})]
+			}) : null,
+			stock.headlines.length ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-5",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+					children: "Berita"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-2 space-y-2",
+					children: stock.headlines.slice(0, 3).map((h) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "text-sm leading-snug",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-foreground/90",
+							children: h.title
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-0.5 text-xs text-muted-foreground",
+							children: h.source
+						})]
+					}, h.title))
+				})]
+			}) : null
+		]
+	});
+}
+function Meta({ label, value }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex items-baseline justify-between gap-2",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "text-muted-foreground",
+			children: label
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "font-mono text-[13px] tabular-nums",
+			children: value
+		})]
+	});
+}
+function Input({ className, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+		className: cn("flex h-11 w-full rounded-full bg-secondary px-4 text-sm text-foreground shadow-[var(--shadow-border)] placeholder:text-muted-foreground/80", "transition-[box-shadow] duration-150 ease-out", "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70", className),
+		...props
+	});
+}
+var createSsrRpc = (functionId) => {
+	const url = "/_serverFn/" + functionId;
+	const serverFnMeta = { id: functionId };
+	const fn = async (...args) => {
+		return (await getServerFnById(functionId, { origin: "server" }))(...args);
+	};
+	return Object.assign(fn, {
+		url,
+		serverFnMeta,
+		[TSS_SERVER_FUNCTION]: true
+	});
+};
+var strategySchema = _enum([
+	"intraday",
+	"swing",
+	"invest"
+]);
+var getMarketOverview = createServerFn({ method: "GET" }).handler(createSsrRpc("188d632fbf615078a692c25743dd576addb6c625e679120cf0a02b872af73ecd"));
+var runScreen = createServerFn({ method: "POST" }).validator((input) => object({
+	strategy: strategySchema,
+	sector: string().optional()
+}).parse(input)).handler(createSsrRpc("6eaf54abdfd734364375eee1d24f9c131579fc8e6952e40428d59ffcf07f3b9f"));
+var STEPS = [
+	"Mengambil harga dan volume emiten BEI…",
+	"Menghitung RSI, MACD, SMA, dan volume relatif…",
+	"Memindai headline dan sentimen berita…",
+	"Menyusun peringkat sesuai strategi…"
+];
+var VERDICT_COPY = {
+	beli: "Beli",
+	pertimbangkan: "Timbang",
+	tunggu: "Tunggu"
+};
+function HomeView() {
+	const strategy = useScreener((s) => s.strategy);
+	const sector = useScreener((s) => s.sector);
+	const query = useScreener((s) => s.query);
+	const result = useScreener((s) => s.result);
+	const selected = useScreener((s) => s.selected);
+	const watchlist = useScreener((s) => s.watchlist);
+	const error = useScreener((s) => s.error);
+	const setStrategy = useScreener((s) => s.setStrategy);
+	const setSector = useScreener((s) => s.setSector);
+	const setQuery = useScreener((s) => s.setQuery);
+	const setResult = useScreener((s) => s.setResult);
+	const setSelected = useScreener((s) => s.setSelected);
+	const setError = useScreener((s) => s.setError);
+	const toggleWatch = useScreener((s) => s.toggleWatch);
+	const [step, setStep] = (0, import_react.useState)(0);
+	const [watchOnly, setWatchOnly] = (0, import_react.useState)(false);
+	const marketQuery = useQuery({
+		queryKey: ["ihsg"],
+		queryFn: () => getMarketOverview(),
+		refetchInterval: 9e4
+	});
+	const mutation = useMutation({
+		mutationFn: () => runScreen({ data: {
+			strategy,
+			sector
+		} }),
+		onSuccess: (data) => {
+			setResult(data);
+			toast.message(`Selesai memindai ${data.scanned} emiten`, { description: `${data.results.length} saham masuk radar ${STRATEGIES[strategy].label.toLowerCase()}.` });
+		},
+		onError: () => {
+			setError("Screening gagal. Coba beberapa saat lagi.");
+		}
+	});
+	(0, import_react.useEffect)(() => {
+		if (!mutation.isPending) return;
+		setStep(0);
+		const id = window.setInterval(() => setStep((s) => (s + 1) % STEPS.length), 2200);
+		return () => window.clearInterval(id);
+	}, [mutation.isPending]);
+	const market = result?.market ?? marketQuery.data;
+	const selectedStock = result?.results.find((r) => r.symbol === selected) ?? null;
+	const filtered = (0, import_react.useMemo)(() => {
+		const rows = result?.results ?? [];
+		const q = query.trim().toUpperCase();
+		return rows.filter((r) => {
+			if (watchOnly && !watchlist.includes(r.symbol)) return false;
+			if (!q) return true;
+			return r.symbol.includes(q) || r.name.toUpperCase().includes(q) || r.sector.toUpperCase().includes(q);
+		});
+	}, [
+		result,
+		query,
+		watchOnly,
+		watchlist
+	]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "relative mx-auto min-h-dvh w-full max-w-[1320px] px-4 pb-16 pt-5 sm:px-6 lg:px-8",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+				className: "saring-enter flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground",
+					children: "Screener saham BEI"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-1 font-display text-[2.4rem] italic leading-none tracking-tight sm:text-5xl",
+					children: "saring"
+				})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarketChip, {
+					price: market?.price,
+					changePct: market?.changePct,
+					statusLabel: market?.statusLabel,
+					asOf: market?.asOf
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+				className: "saring-enter-2 mt-8 grid gap-3 md:grid-cols-3",
+				children: STRATEGY_ORDER.map((id) => {
+					const item = STRATEGIES[id];
+					const active = strategy === id;
+					return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => setStrategy(id),
+						className: cn("rounded-3xl p-4 text-left shadow-[var(--shadow-border)] transition-[background-color,box-shadow,transform] duration-200 ease-out", "hover:shadow-[var(--shadow-border-hover)] active:scale-[0.99]", active ? "bg-primary text-primary-foreground" : "bg-card text-foreground"),
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex items-baseline justify-between gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "font-display text-xl tracking-tight",
+								children: item.label
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: cn("font-mono text-[11px] uppercase tracking-wide", active ? "text-primary-foreground/70" : "text-muted-foreground"),
+								children: item.horizon
+							})]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: cn("mt-2 text-sm leading-relaxed", active ? "text-primary-foreground/80" : "text-muted-foreground"),
+							children: item.blurb
+						})]
+					}, id);
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "saring-enter-3 mt-6 flex flex-col gap-3 lg:flex-row lg:items-center",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "relative min-w-0 flex-1",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Search, { className: "pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+							value: query,
+							onChange: (e) => setQuery(e.target.value),
+							placeholder: "Cari kode, nama, atau sektor",
+							className: "pl-11",
+							"aria-label": "Cari emiten"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+						className: "sr-only",
+						htmlFor: "sektor",
+						children: "Sektor"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+						id: "sektor",
+						value: sector,
+						onChange: (e) => setSector(e.target.value),
+						className: "h-11 rounded-full bg-secondary px-4 text-sm text-foreground shadow-[var(--shadow-border)] focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:outline-none",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Semua",
+							children: "Semua sektor"
+						}), SECTORS.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: s,
+							children: s
+						}, s))]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+						className: "h-11 min-w-[11rem]",
+						onClick: () => mutation.mutate(),
+						disabled: mutation.isPending,
+						children: [mutation.isPending ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, { className: "size-4 animate-spin" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowUpRight, { className: "size-4" }), mutation.isPending ? "Menyaring…" : "Jalankan screening"]
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "mt-3 text-[13px] text-muted-foreground",
+				children: [
+					UNIVERSE.length,
+					" emiten likuid · teknikal, fundamental, dan sentimen berita · strategi",
+					" ",
+					STRATEGIES[strategy].label.toLowerCase()
+				]
+			}),
+			mutation.isPending ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoadingPanel, {
+				step,
+				strategy
+			}) : null,
+			error && !mutation.isPending ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-6 rounded-2xl bg-down/10 px-4 py-3 text-sm text-down",
+				children: error
+			}) : null,
+			!mutation.isPending && result ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap items-center justify-between gap-3",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "text-sm text-muted-foreground",
+							children: [
+								result.qualified,
+								" kandidat dari ",
+								result.scanned,
+								" emiten",
+								result.asOf ? ` · ${formatJakarta(result.asOf)}` : ""
+							]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							type: "button",
+							onClick: () => setWatchOnly((v) => !v),
+							className: cn("inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors duration-150", watchOnly ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Star, { className: cn("size-3.5", watchOnly && "fill-current") }), "Tersimpan"]
+						})]
+					}),
+					result.note ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-3 rounded-2xl bg-warn/10 px-4 py-3 text-sm text-warn",
+						children: result.note
+					}) : null,
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-3 space-y-2",
+						children: filtered.map((row, i) => {
+							const active = row.symbol === selected;
+							const up = row.changePct >= 0;
+							const saved = watchlist.includes(row.symbol);
+							return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: cn("flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left shadow-[var(--shadow-border)] transition-[background-color,box-shadow] duration-150 sm:px-4", active ? "bg-accent" : "bg-card hover:shadow-[var(--shadow-border-hover)]"),
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+									type: "button",
+									onClick: () => setSelected(row.symbol),
+									className: "flex min-w-0 flex-1 items-center gap-3",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "hidden w-5 font-mono text-[12px] text-muted-foreground tabular-nums sm:block",
+											children: String(i + 1).padStart(2, "0")
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScoreRing, {
+											value: row.scores.total,
+											size: 44
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "min-w-0 flex-1",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "flex flex-wrap items-center gap-2",
+												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "font-medium tracking-tight",
+													children: row.symbol
+												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, {
+													variant: row.verdict,
+													children: VERDICT_COPY[row.verdict]
+												})]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "truncate text-[13px] text-muted-foreground",
+												children: row.name
+											})]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkline, {
+											values: row.spark,
+											up,
+											className: "hidden h-8 w-24 shrink-0 md:block"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "shrink-0 text-right",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: "font-mono text-sm tabular-nums",
+												children: formatPrice(row.price)
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+												className: cn("font-mono text-[12px] tabular-nums", up ? "text-up" : "text-down"),
+												children: formatPct(row.changePct)
+											})]
+										})
+									]
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground",
+									"aria-label": saved ? "Hapus dari watchlist" : "Simpan",
+									onClick: () => toggleWatch(row.symbol),
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Star, { className: cn("size-4", saved && "fill-primary text-primary") })
+								})]
+							}) }, row.symbol);
+						})
+					}),
+					filtered.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-8 text-sm text-muted-foreground",
+						children: "Tidak ada emiten yang cocok dengan saringan ini."
+					}) : null
+				] }), selectedStock ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					className: "fixed inset-0 z-40 bg-background/70 lg:hidden",
+					"aria-label": "Tutup detail",
+					onClick: () => setSelected(null)
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
+					className: "fixed inset-x-0 bottom-0 z-50 max-h-[86vh] overflow-y-auto rounded-t-3xl bg-card p-5 shadow-[var(--shadow-border)] lg:sticky lg:top-5 lg:z-0 lg:max-h-[calc(100dvh-2.5rem)] lg:rounded-3xl",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "mx-auto mb-3 h-1 w-10 rounded-full bg-border lg:hidden" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StockDetail, {
+						stock: selectedStock,
+						onClose: () => setSelected(null)
+					})]
+				})] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("aside", {
+					className: "hidden rounded-3xl bg-card p-6 text-sm text-muted-foreground shadow-[var(--shadow-border)] lg:block",
+					children: "Pilih emiten untuk melihat thesis, level, dan pecahan skor."
+				})]
+			}) : !mutation.isPending ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EmptyState, {
+				strategy,
+				onRun: () => mutation.mutate()
+			}) : null,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
+				className: "mt-16 max-w-2xl text-[12px] leading-relaxed text-muted-foreground",
+				children: ["Saring memindai emiten likuid BEI dari data pasar publik, indikator teknikal, kualitas emiten, dan sentimen berita. Ini bukan saran investasi, ajakan membeli, atau jaminan imbal hasil. Selalu verifikasi ke sumber resmi dan sesuaikan dengan profil risiko Anda.", result && !result.sentimentEnabled ? " Analisis sentimen AI tidak aktif pada sesi ini." : ""]
+			})
+		]
+	});
+}
+function MarketChip({ price, changePct, statusLabel, asOf }) {
+	const up = (changePct ?? 0) >= 0;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "flex items-baseline gap-2",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+					children: "IHSG"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "font-mono text-lg tabular-nums",
+					children: price ? formatPrice(price) : "—"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: cn("font-mono text-sm tabular-nums", up ? "text-up" : "text-down"),
+					children: changePct != null ? formatPct(changePct) : ""
+				})
+			]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+			className: "mt-0.5 text-[12px] text-muted-foreground",
+			children: [statusLabel ?? "Memuat", asOf ? ` · ${formatJakarta(asOf)}` : ""]
+		})]
+	});
+}
+function LoadingPanel({ step, strategy }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mt-10 rounded-3xl bg-card px-5 py-8 shadow-[var(--shadow-border)] sm:px-8",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "font-display text-2xl tracking-tight",
+				children: "Memindai papan BEI"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "shimmer-text mt-2 text-sm",
+				children: STEPS[step]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6",
+				children: UNIVERSE.slice(0, 12).map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "rounded-xl bg-secondary px-2 py-2 text-center font-mono text-[11px] text-muted-foreground",
+					style: { opacity: .35 + (i + step) % 5 * .12 },
+					children: s.symbol
+				}, s.symbol))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "mt-5 text-[13px] text-muted-foreground",
+				children: [
+					"Strategi ",
+					STRATEGIES[strategy].label,
+					" · ",
+					UNIVERSE.length,
+					" emiten. Biasanya 8–15 detik."
+				]
+			})
+		]
+	});
+}
+function EmptyState({ strategy, onRun }) {
+	const item = STRATEGIES[strategy];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mt-10 rounded-3xl bg-card px-5 py-8 shadow-[var(--shadow-border)] sm:px-8",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "font-display text-3xl tracking-tight",
+				children: "Saring dulu, baru beli."
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground",
+				children: item.blurb
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-5 grid gap-2 sm:grid-cols-2",
+				children: item.looksFor.map((line) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex gap-2 text-sm text-foreground/90",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mt-2 size-1 shrink-0 rounded-full bg-primary" }), line]
+				}, line))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+				className: "mt-7",
+				onClick: onRun,
+				children: ["Jalankan screening", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowUpRight, { className: "size-4" })]
+			})
+		]
+	});
+}
+function Home() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HomeView, {});
+}
+//#endregion
+export { Home as component };
