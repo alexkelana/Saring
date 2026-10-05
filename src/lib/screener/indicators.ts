@@ -109,6 +109,7 @@ export function computeIndicators(chart: ChartBundle): Indicators {
   const range = chart.week52High - chart.week52Low;
   return {
     rsi: rsi(closes, 14),
+    rsiHour: null,
     sma20: sma(closes, 20),
     sma50: sma50Now,
     sma200: sma200Now,

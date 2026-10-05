@@ -67,16 +67,23 @@ export async function fetchHeadlines(symbol: string, name: string): Promise<Head
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
         Accept: "application/rss+xml, application/xml, text/xml",
       },
-      signal: AbortSignal.timeout(3500),
+      signal: AbortSignal.timeout(2500),
     });
     if (!res.ok) {
       newsCache.set(key, { at: Date.now(), value: [] });
       return [];
     }
     const xml = await res.text();
+    const first = name.split(" ")[0]!.toUpperCase();
     const headlines = parseRss(xml, 4).filter((h) => {
       const t = h.title.toUpperCase();
-      return t.includes(symbol) || t.includes(name.split(" ")[0]!.toUpperCase()) || t.includes("SAHAM") || t.includes("IHSG") || t.includes("BEI");
+      return (
+        t.includes(symbol) ||
+        t.includes(first) ||
+        t.includes("SAHAM") ||
+        t.includes("IHSG") ||
+        t.includes("BEI")
+      );
     });
     const value = headlines.length ? headlines : parseRss(xml, 3);
     newsCache.set(key, { at: Date.now(), value });

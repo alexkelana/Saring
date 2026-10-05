@@ -1,8 +1,21 @@
 import { STRATEGIES } from "./strategies";
-import type { ChartBundle, Indicators, StockMeta, StockResult, StrategyId, Verdict } from "./types";
-import { clamp, computeIndicators, lastBarsSpark, nearestResistance, nearestSupport, round } from "./indicators";
+import { indicatorsFromSnap, type IdxSnapshot } from "./tradingview";
+import type {
+  Indicators,
+  Levels,
+  StockResult,
+  StrategyId,
+  Verdict,
+} from "./types";
+import { clamp, round } from "./indicators";
 
-function lerpScore(value: number, goodLow: number, goodHigh: number, hardLow: number, hardHigh: number): number {
+function lerpScore(
+  value: number,
+  goodLow: number,
+  goodHigh: number,
+  hardLow: number,
+  hardHigh: number,
+): number {
   if (value <= hardLow || value >= hardHigh) return 8;
   if (value >= goodLow && value <= goodHigh) return 88;
   if (value < goodLow) {
@@ -13,31 +26,40 @@ function lerpScore(value: number, goodLow: number, goodHigh: number, hardLow: nu
   return 8 + t * 80;
 }
 
-function technicalScore(strategy: StrategyId, ind: Indicators, chart: ChartBundle): { score: number; reasons: string[]; risks: string[] } {
+function technicalScore(
+  strategy: StrategyId,
+  ind: Indicators,
+  snap: IdxSnapshot,
+): { score: number; reasons: string[]; risks: string[] } {
   const reasons: string[] = [];
   const risks: string[] = [];
-  const price = chart.price;
+  const price = snap.price;
   let acc = 0;
   let w = 0;
-
   const add = (weight: number, pts: number) => {
     acc += weight * pts;
     w += weight;
   };
 
-  if (ind.rsi != null) {
-    const band = strategy === "intraday" ? [38, 68, 22, 82] : strategy === "swing" ? [42, 66, 28, 78] : [35, 65, 20, 82];
-    add(1.2, lerpScore(ind.rsi, band[0]!, band[1]!, band[2]!, band[3]!));
-    if (ind.rsi >= 45 && ind.rsi <= 65) reasons.push(`RSI ${ind.rsi.toFixed(0)} — momentum sehat`);
-    else if (ind.rsi > 72) risks.push(`RSI ${ind.rsi.toFixed(0)} jenuh beli`);
-    else if (ind.rsi < 35) risks.push(`RSI ${ind.rsi.toFixed(0)} lemah`);
+  const rsi = strategy === "intraday" ? (ind.rsiHour ?? ind.rsi) : ind.rsi;
+  if (rsi != null) {
+    const band =
+      strategy === "intraday"
+        ? [38, 68, 22, 82]
+        : strategy === "swing"
+          ? [42, 66, 28, 78]
+          : [35, 65, 20, 82];
+    add(1.2, lerpScore(rsi, band[0]!, band[1]!, band[2]!, band[3]!));
+    if (rsi >= 45 && rsi <= 65) reasons.push(`RSI ${rsi.toFixed(0)} — momentum sehat`);
+    else if (rsi > 72) risks.push(`RSI ${rsi.toFixed(0)} jenuh beli`);
+    else if (rsi < 32) risks.push(`RSI ${rsi.toFixed(0)} lemah`);
   }
 
   if (ind.ema9 != null && strategy === "intraday") {
     const above = price >= ind.ema9;
     add(1.1, above ? 86 : 28);
-    if (above) reasons.push("Harga di atas EMA9");
-    else risks.push("Harga di bawah EMA9");
+    if (above) reasons.push("Harga di atas EMA10");
+    else risks.push("Harga di bawah EMA10");
   }
 
   if (ind.sma20 != null) {
@@ -63,7 +85,7 @@ function technicalScore(strategy: StrategyId, ind: Indicators, chart: ChartBundl
   }
 
   if (ind.sma50Slope != null) {
-    add(0.8, clamp(50 + ind.sma50Slope * 18));
+    add(0.7, clamp(50 + ind.sma50Slope * 1.4));
   }
 
   if (ind.macdHist != null) {
@@ -74,18 +96,18 @@ function technicalScore(strategy: StrategyId, ind: Indicators, chart: ChartBundl
 
   if (ind.rvol != null) {
     if (strategy === "intraday") {
-      add(1.4, clamp(30 + (ind.rvol - 0.6) * 40));
+      add(1.4, clamp(30 + Math.min(ind.rvol, 4) * 18));
       if (ind.rvol >= 1.4) reasons.push(`Volume ${ind.rvol.toFixed(1)}× rata-rata`);
       else if (ind.rvol < 0.8) risks.push("Volume tipis");
     } else {
-      add(0.7, clamp(40 + (ind.rvol - 0.7) * 25));
+      add(0.6, clamp(40 + Math.min(ind.rvol, 3) * 12));
     }
   }
 
   if (ind.roc10 != null) {
-    if (strategy === "intraday") add(0.9, lerpScore(ind.roc10, 0.4, 6, -8, 14));
-    else if (strategy === "swing") add(0.8, lerpScore(ind.roc10, 0, 8, -12, 18));
-    else add(0.4, lerpScore(ind.roc10, -4, 6, -20, 22));
+    if (strategy === "intraday") add(0.9, lerpScore(ind.roc10, 0.4, 8, -12, 18));
+    else if (strategy === "swing") add(0.8, lerpScore(ind.roc10, 0, 10, -16, 22));
+    else add(0.4, lerpScore(ind.roc10, -6, 8, -30, 28));
   }
 
   if (ind.pos52w != null) {
@@ -97,13 +119,17 @@ function technicalScore(strategy: StrategyId, ind: Indicators, chart: ChartBundl
   }
 
   if (ind.atrPct != null) {
-    if (strategy === "intraday") add(0.6, lerpScore(ind.atrPct, 1.4, 4.2, 0.4, 9));
-    else if (strategy === "swing") add(0.5, lerpScore(ind.atrPct, 1.2, 3.8, 0.4, 8));
-    else add(0.7, lerpScore(ind.atrPct, 0.8, 2.8, 0.3, 7));
-    if (strategy === "invest" && ind.atrPct > 5) risks.push("Volatilitas tinggi untuk investasi");
+    if (strategy === "intraday") add(0.6, lerpScore(ind.atrPct, 1.4, 4.2, 0.4, 12));
+    else if (strategy === "swing") add(0.5, lerpScore(ind.atrPct, 1.2, 3.8, 0.4, 10));
+    else add(0.7, lerpScore(ind.atrPct, 0.8, 2.8, 0.3, 8));
+    if (strategy === "invest" && ind.atrPct > 6) risks.push("Volatilitas tinggi untuk investasi");
   }
 
-  if (chart.changePct <= -5 && strategy === "intraday") {
+  if (snap.recommend != null) {
+    add(0.4, clamp(50 + snap.recommend * 40));
+  }
+
+  if (snap.changePct <= -5 && strategy === "intraday") {
     add(0.8, 18);
     risks.push("Koreksi harian dalam");
   }
@@ -114,104 +140,136 @@ function technicalScore(strategy: StrategyId, ind: Indicators, chart: ChartBundl
 
 function fundamentalScore(
   strategy: StrategyId,
-  meta: StockMeta,
-  chart: ChartBundle,
-  ind: Indicators,
+  snap: IdxSnapshot,
 ): { score: number; reasons: string[]; risks: string[] } {
   const reasons: string[] = [];
   const risks: string[] = [];
-  let acc = 48;
+  const f = snap.fundamentals;
+  let acc = 46;
 
-  const value = chart.price * chart.volume;
   if (strategy === "intraday") {
-    if (value >= 20e9) {
-      acc += 18;
+    if (snap.value >= 20e9) {
+      acc += 16;
       reasons.push("Likuiditas sesi kuat");
-    } else if (value >= 8e9) acc += 10;
-    else if (value >= 3e9) acc += 2;
+    } else if (snap.value >= 8e9) acc += 10;
+    else if (snap.value >= 3e9) acc += 2;
     else {
       acc -= 16;
       risks.push("Nilai transaksi rendah");
     }
-  } else if (value >= 8e9) acc += 8;
-  else if (value < 1.5e9) {
-    acc -= 10;
+  } else if (snap.value >= 8e9) acc += 6;
+  else if (snap.value < 1e9) {
+    acc -= 8;
     risks.push("Likuiditas menengah ke bawah");
   }
 
-  if (meta.size === "mega") acc += strategy === "invest" ? 16 : 8;
-  else if (meta.size === "large") acc += strategy === "invest" ? 12 : 6;
-  else if (meta.size === "mid") acc += strategy === "invest" ? 2 : 4;
-  else {
-    acc -= strategy === "invest" ? 14 : 4;
+  if (snap.size === "mega") acc += strategy === "invest" ? 10 : 6;
+  else if (snap.size === "large") acc += strategy === "invest" ? 8 : 5;
+  else if (snap.size === "small") {
+    acc -= strategy === "invest" ? 12 : 3;
     if (strategy === "invest") risks.push("Kapitalisasi kecil");
   }
 
-  if (meta.flags.lq45) {
-    acc += strategy === "intraday" ? 6 : 10;
+  if (snap.flags.lq45) {
+    acc += strategy === "intraday" ? 5 : 8;
     if (strategy !== "intraday") reasons.push("Anggota LQ45");
   }
-  if (meta.flags.idx30) acc += 4;
-  if (meta.flags.soe && strategy === "invest") {
-    acc += 4;
+  if (snap.flags.idx30) acc += 3;
+  if (snap.flags.soe && strategy === "invest") {
+    acc += 3;
     reasons.push("BUMN / kualitas institusi");
   }
 
-  const lastDiv = chart.dividends[0];
-  const yearMs = 400 * 24 * 3600 * 1000;
-  const paidRecently = lastDiv && Date.now() - lastDiv.date < yearMs;
-  if (paidRecently || meta.flags.dividend) {
-    acc += strategy === "invest" ? 12 : strategy === "swing" ? 6 : 2;
-    if (strategy === "invest" && lastDiv) {
-      const yieldPct = (lastDiv.amount / chart.price) * 100;
-      reasons.push(`Dividen terakhir ${round(yieldPct, 1)}% dari harga`);
+  if (f.pe != null && f.pe > 0) {
+    const pePts = lerpScore(f.pe, 6, 18, 1, 55);
+    acc += (strategy === "invest" ? 0.18 : 0.06) * (pePts - 50);
+    if (strategy === "invest" && f.pe >= 6 && f.pe <= 16) {
+      reasons.push(`PE ${f.pe.toFixed(1)}× — valuasi masuk akal`);
+    } else if (strategy === "invest" && f.pe > 40) {
+      risks.push(`PE ${f.pe.toFixed(0)}× mahal`);
     }
   } else if (strategy === "invest") {
-    acc -= 4;
+    acc -= 6;
   }
 
-  if (meta.flags.shariah && strategy !== "intraday") acc += 3;
-
-  if (chart.price < 50) {
-    acc -= 22;
-    risks.push("Harga sangat rendah — risiko gorengan");
-  } else if (chart.price < 120 && meta.size === "small") {
-    acc -= 8;
+  if (f.pb != null && f.pb > 0 && strategy !== "intraday") {
+    acc += 0.08 * (lerpScore(f.pb, 0.6, 2.4, 0.15, 12) - 50);
   }
 
-  if (ind.sma200Slope != null && strategy === "invest") {
-    acc += clamp(ind.sma200Slope * 8, -8, 10);
+  if (f.roe != null) {
+    if (f.roe >= 15) {
+      acc += strategy === "invest" ? 12 : 5;
+      if (strategy === "invest") reasons.push(`ROE ${f.roe.toFixed(0)}%`);
+    } else if (f.roe >= 8) acc += strategy === "invest" ? 6 : 2;
+    else if (f.roe < 0) {
+      acc -= strategy === "invest" ? 12 : 4;
+      if (strategy === "invest") risks.push("ROE negatif");
+    }
+  }
+
+  if (f.divYield != null && f.divYield >= 2) {
+    acc += strategy === "invest" ? Math.min(12, f.divYield) : strategy === "swing" ? 4 : 1;
+    if (strategy === "invest" && f.divYield >= 3) {
+      reasons.push(`Imbal hasil dividen ${f.divYield.toFixed(1)}%`);
+    }
+  } else if (strategy === "invest" && snap.flags.dividend) {
+    acc += 4;
+  }
+
+  if (f.de != null && snap.sector !== "Perbankan" && strategy === "invest") {
+    if (f.de > 2.2) {
+      acc -= 8;
+      risks.push("Utang relatif tinggi");
+    } else if (f.de < 0.8) acc += 3;
+  }
+
+  if (f.epsGrowth != null && strategy !== "intraday") {
+    if (f.epsGrowth >= 10) acc += 6;
+    else if (f.epsGrowth < -15) acc -= 6;
+  }
+
+  if (snap.flags.shariah && strategy !== "intraday") acc += 2;
+
+  if (snap.price < 50 && snap.size === "small" && snap.value < 5e9) {
+    acc -= 14;
+    risks.push("Harga rendah dan kurang likuid");
   }
 
   return { score: clamp(acc), reasons: reasons.slice(0, 3), risks: risks.slice(0, 2) };
 }
 
 function verdictOf(total: number): Verdict {
-  if (total >= 72) return "beli";
-  if (total >= 58) return "pertimbangkan";
+  if (total >= 68) return "beli";
+  if (total >= 56) return "pertimbangkan";
   return "tunggu";
 }
 
-function levelsFor(strategy: StrategyId, chart: ChartBundle, ind: Indicators) {
-  const atr = ind.atr ?? chart.price * 0.02;
+function levelsFor(strategy: StrategyId, snap: IdxSnapshot, ind: Indicators): Levels {
+  const atr = ind.atr && ind.atr > 0 ? ind.atr : snap.price * 0.02;
   const stopMul = strategy === "intraday" ? 1.05 : strategy === "swing" ? 1.7 : 2.4;
   const tgtMul = strategy === "intraday" ? 1.6 : strategy === "swing" ? 2.4 : 3.2;
-  const support = nearestSupport(chart.bars, chart.price);
-  const resistance = nearestResistance(chart.bars, chart.price);
+  const below = [snap.sma20, snap.sma50, snap.sma200, snap.low, snap.week52Low].filter(
+    (n): n is number => n != null && n < snap.price * 0.997,
+  );
+  const above = [snap.sma20, snap.sma50, snap.high, snap.week52High].filter(
+    (n): n is number => n != null && n > snap.price * 1.003,
+  );
+  const support = below.length ? Math.max(...below) : snap.price - atr * stopMul;
+  const resistance = above.length ? Math.min(...above) : snap.price + atr * tgtMul;
   return {
     support: round(support),
     resistance: round(resistance),
-    stop: round(Math.min(support, chart.price - atr * stopMul)),
-    target: round(Math.max(resistance, chart.price + atr * tgtMul)),
+    stop: round(Math.min(support, snap.price - atr * stopMul)),
+    target: round(Math.max(resistance, snap.price + atr * tgtMul)),
   };
 }
 
 export type ScoredRow = Omit<StockResult, "thesis" | "headlines">;
 
-export function scoreStock(strategy: StrategyId, meta: StockMeta, chart: ChartBundle): ScoredRow {
-  const indicators = computeIndicators(chart);
-  const t = technicalScore(strategy, indicators, chart);
-  const f = fundamentalScore(strategy, meta, chart, indicators);
+export function scoreStock(strategy: StrategyId, snap: IdxSnapshot): ScoredRow {
+  const indicators = indicatorsFromSnap(snap);
+  const t = technicalScore(strategy, indicators, snap);
+  const f = fundamentalScore(strategy, snap);
   const weights = STRATEGIES[strategy].weights;
   const sentiment = 50;
   const total = clamp(
@@ -219,26 +277,28 @@ export function scoreStock(strategy: StrategyId, meta: StockMeta, chart: ChartBu
   );
   const reasons = [...t.reasons, ...f.reasons].filter((v, i, a) => a.indexOf(v) === i).slice(0, 5);
   const risks = [...t.risks, ...f.risks].filter((v, i, a) => a.indexOf(v) === i).slice(0, 4);
-  const lastDiv = chart.dividends[0];
   return {
-    symbol: meta.symbol,
-    name: meta.name,
-    sector: meta.sector,
-    size: meta.size,
-    flags: meta.flags,
-    price: chart.price,
-    prevClose: chart.prevClose,
-    changePct: chart.changePct,
-    volume: chart.volume,
-    value: chart.price * chart.volume,
-    spark: lastBarsSpark(chart.bars, 56),
+    symbol: snap.symbol,
+    name: snap.name,
+    sector: snap.sector,
+    industry: snap.industry,
+    size: snap.size,
+    flags: snap.flags,
+    price: snap.price,
+    prevClose: snap.prevClose,
+    changePct: snap.changePct,
+    volume: snap.volume,
+    value: snap.value,
+    spark: [],
+    week52High: snap.week52High,
+    week52Low: snap.week52Low,
     scores: { total, technical: t.score, fundamental: f.score, sentiment },
     verdict: verdictOf(total),
     reasons,
     risks,
-    levels: levelsFor(strategy, chart, indicators),
+    levels: levelsFor(strategy, snap, indicators),
     indicators,
-    lastDiv,
+    fundamentals: snap.fundamentals,
   };
 }
 
@@ -266,7 +326,8 @@ export function applySentiment(
 }
 
 export function minValueFor(strategy: StrategyId): number {
-  if (strategy === "intraday") return 2.5e9;
-  if (strategy === "swing") return 1.2e9;
-  return 0.6e9;
+  if (strategy === "intraday") return 3e9;
+  if (strategy === "swing") return 1e9;
+  return 4e8;
 }
+

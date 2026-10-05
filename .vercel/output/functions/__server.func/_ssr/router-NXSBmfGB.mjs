@@ -1,16 +1,26 @@
-import { i as __toESM, n as __exportAll } from "../_runtime.mjs";
+import { i as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { _ as lazyRouteComponent, b as useRouter, f as Scripts, g as Outlet, h as createRouter, p as HeadContent, v as createFileRoute, y as createRootRoute } from "../_libs/@tanstack/react-router+[...].mjs";
 import { i as require_jsx_runtime, r as QueryClientProvider } from "../_libs/react+tanstack__react-query.mjs";
-import { a as string, i as object, n as literal, o as union, r as number } from "../_libs/zod.mjs";
+import { n as TSS_SERVER_FUNCTION, r as getServerFnById, t as createServerFn } from "./ssr.mjs";
+import { a as string, i as object, n as literal, o as union, r as number, t as _enum } from "../_libs/zod.mjs";
 import { n as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { t as Toaster } from "../_libs/sonner.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-DTf7Nzs4.js
-var router_DTf7Nzs4_exports = /* @__PURE__ */ __exportAll({ getRouter: () => getRouter });
+//#region node_modules/.nitro/vite/services/ssr/assets/router-NXSBmfGB.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-var FALLBACK_MESSAGE = "An unexpected error occurred. Try reloading the page.";
+var __defProp = Object.defineProperty;
+var __exportAll = (all, no_symbols) => {
+	let target = {};
+	for (var name in all) __defProp(target, name, {
+		get: all[name],
+		enumerable: true
+	});
+	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
+	return target;
+};
+var FALLBACK_MESSAGE = "Terjadi kesalahan. Muat ulang halaman.";
 function errorMessage(error) {
 	if (error instanceof Error && error.message) return error.message;
 	if (typeof error === "string" && error) return error;
@@ -18,10 +28,10 @@ function errorMessage(error) {
 }
 function AppErrorComponent({ error }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", {
-		className: "flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50",
+		className: "flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-6 text-center text-foreground",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				className: "text-red-500",
+				className: "text-down",
 				"aria-hidden": "true",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, {
 					className: "size-10",
@@ -29,11 +39,11 @@ function AppErrorComponent({ error }) {
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "text-lg font-semibold",
-				children: "Something went wrong"
+				className: "font-display text-lg font-medium",
+				children: "Ada yang tidak beres"
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "max-w-md text-sm break-words text-zinc-500 dark:text-zinc-400",
+				className: "max-w-md text-sm break-words text-muted-foreground",
 				children: errorMessage(error)
 			})
 		]
@@ -319,7 +329,7 @@ function PreviewHostBridge() {
 function AuthProvider({ children }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children });
 }
-var styles_default = "/assets/styles-DKrnqS19.css";
+var styles_default = "/assets/styles--67pidQZ.css";
 var APP_NAME = "Saring";
 var Route$1 = createRootRoute({
 	head: () => ({
@@ -373,13 +383,40 @@ var Route$1 = createRootRoute({
 		})]
 	})
 });
-var $$splitComponentImporter = () => import("./routes-32bZ3fCm.mjs");
-var rootRouteChildren = { IndexRoute: createFileRoute("/")({ component: lazyRouteComponent($$splitComponentImporter, "component") }).update({
+var createSsrRpc = (functionId) => {
+	const url = "/_serverFn/" + functionId;
+	const serverFnMeta = { id: functionId };
+	const fn = async (...args) => {
+		return (await getServerFnById(functionId, { origin: "server" }))(...args);
+	};
+	return Object.assign(fn, {
+		url,
+		serverFnMeta,
+		[TSS_SERVER_FUNCTION]: true
+	});
+};
+var strategySchema = _enum([
+	"intraday",
+	"swing",
+	"invest"
+]);
+var getMarketOverview = createServerFn({ method: "GET" }).handler(createSsrRpc("188d632fbf615078a692c25743dd576addb6c625e679120cf0a02b872af73ecd"));
+var runScreen = createServerFn({ method: "POST" }).validator((input) => object({
+	strategy: strategySchema,
+	sector: string().optional()
+}).parse(input)).handler(createSsrRpc("6eaf54abdfd734364375eee1d24f9c131579fc8e6952e40428d59ffcf07f3b9f"));
+var $$splitComponentImporter = () => import("./routes-C7YNKZXk.mjs");
+var Route = createFileRoute("/")({
+	loader: () => getMarketOverview(),
+	component: lazyRouteComponent($$splitComponentImporter, "component")
+});
+var rootRouteChildren = { IndexRoute: Route.update({
 	id: "/",
 	path: "/",
 	getParentRoute: () => Route$1
 }) };
 var routeTree = Route$1._addFileChildren(rootRouteChildren)._addFileTypes();
+var router_exports = /* @__PURE__ */ __exportAll({ getRouter: () => getRouter });
 function getRouter() {
 	return createRouter({
 		routeTree,
@@ -388,4 +425,4 @@ function getRouter() {
 	});
 }
 //#endregion
-export { getRouter, router_DTf7Nzs4_exports as t };
+export { runScreen as i, Route as n, getMarketOverview as r, router_exports as t };

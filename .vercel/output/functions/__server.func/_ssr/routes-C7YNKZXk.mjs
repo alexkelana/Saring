@@ -1,20 +1,87 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { i as require_jsx_runtime, n as useQuery, t as useMutation } from "../_libs/react+tanstack__react-query.mjs";
-import { n as TSS_SERVER_FUNCTION, r as getServerFnById, t as createServerFn } from "./ssr.mjs";
-import { i as UNIVERSE, n as STRATEGIES, r as STRATEGY_ORDER, t as SECTORS } from "./universe-DbDHsdq7.mjs";
-import { a as string, i as object, t as _enum } from "../_libs/zod.mjs";
+import { i as STRATEGY_ORDER, n as SECTORS, r as STRATEGIES, t as MOSAIC } from "./universe-C_BugJ9r.mjs";
 import { a as LoaderCircle, i as Search, o as ArrowUpRight, r as Star, t as X } from "../_libs/lucide-react.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
+import { i as runScreen, n as Route, r as getMarketOverview } from "./router-NXSBmfGB.mjs";
 import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
 import { n as create, t as persist } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-32bZ3fCm.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-C7YNKZXk.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
+function formatPrice(n) {
+	if (!Number.isFinite(n)) return "—";
+	const digits = n >= 1e3 ? 0 : n >= 100 ? 1 : 2;
+	return new Intl.NumberFormat("id-ID", {
+		maximumFractionDigits: digits,
+		minimumFractionDigits: 0
+	}).format(n);
+}
+function formatCompactIDR(n) {
+	if (!Number.isFinite(n) || n === 0) return "0";
+	const abs = Math.abs(n);
+	const sign = n < 0 ? "−" : "";
+	if (abs >= 0xe8d4a51000) return `${sign}${(abs / 0xe8d4a51000).toFixed(abs >= 0x9184e72a000 ? 1 : 2).replace(/\.0+$/, "")} T`;
+	if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(abs >= 1e10 ? 1 : 2).replace(/\.0+$/, "")} M`;
+	if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1).replace(/\.0+$/, "")} jt`;
+	if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1).replace(/\.0+$/, "")} rb`;
+	return `${sign}${Math.round(abs)}`;
+}
+function formatPct(n, digits = 2) {
+	if (!Number.isFinite(n)) return "—";
+	return `${n > 0 ? "+" : ""}${n.toFixed(digits)}%`;
+}
+function formatJakarta(ts) {
+	return new Intl.DateTimeFormat("id-ID", {
+		timeZone: "Asia/Jakarta",
+		weekday: "short",
+		day: "numeric",
+		month: "short",
+		hour: "2-digit",
+		minute: "2-digit",
+		hourCycle: "h23"
+	}).format(new Date(ts));
+}
+function formatMultiple(n, digits = 1) {
+	if (n == null || !Number.isFinite(n)) return "—";
+	return `${n.toFixed(digits)}×`;
+}
+function formatRoe(n) {
+	if (n == null || !Number.isFinite(n)) return "—";
+	return `${n.toFixed(n >= 10 ? 0 : 1)}%`;
+}
 function cn(...inputs) {
 	return twMerge(clsx(inputs));
+}
+function RangeBar({ low, high, value, className }) {
+	if (low == null || high == null || high <= low) return null;
+	const pct = Math.min(100, Math.max(0, (value - low) / (high - low) * 100));
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: cn("space-y-1.5", className),
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "flex items-baseline justify-between text-xs text-muted-foreground",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "font-mono tabular-nums",
+					children: formatPrice(low)
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: "52 minggu" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "font-mono tabular-nums",
+					children: formatPrice(high)
+				})
+			]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "relative h-1 rounded-full bg-secondary",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary",
+				style: { left: `${pct}%` }
+			})
+		})]
+	});
 }
 function ScoreRing({ value, size = 52, className }) {
 	const r = 18;
@@ -136,43 +203,12 @@ function Separator({ className }) {
 		role: "separator"
 	});
 }
-function formatPrice(n) {
-	if (!Number.isFinite(n)) return "—";
-	const digits = n >= 1e3 ? 0 : n >= 100 ? 1 : 2;
-	return new Intl.NumberFormat("id-ID", {
-		maximumFractionDigits: digits,
-		minimumFractionDigits: 0
-	}).format(n);
-}
-function formatCompactIDR(n) {
-	if (!Number.isFinite(n) || n === 0) return "0";
-	const abs = Math.abs(n);
-	const sign = n < 0 ? "−" : "";
-	if (abs >= 0xe8d4a51000) return `${sign}${(abs / 0xe8d4a51000).toFixed(abs >= 0x9184e72a000 ? 1 : 2).replace(/\.0+$/, "")} T`;
-	if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(abs >= 1e10 ? 1 : 2).replace(/\.0+$/, "")} M`;
-	if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1).replace(/\.0+$/, "")} jt`;
-	if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1).replace(/\.0+$/, "")} rb`;
-	return `${sign}${Math.round(abs)}`;
-}
-function formatPct(n, digits = 2) {
-	if (!Number.isFinite(n)) return "—";
-	return `${n > 0 ? "+" : ""}${n.toFixed(digits)}%`;
-}
-function formatJakarta(ts) {
-	return new Intl.DateTimeFormat("id-ID", {
-		timeZone: "Asia/Jakarta",
-		weekday: "short",
-		day: "numeric",
-		month: "short",
-		hour: "2-digit",
-		minute: "2-digit",
-		hourCycle: "h23"
-	}).format(new Date(ts));
-}
 var useScreener = create()(persist((set, get) => ({
 	strategy: "swing",
 	sector: "Semua",
 	query: "",
+	sort: "score",
+	verdictFilter: "all",
 	result: null,
 	selected: null,
 	watchlist: [],
@@ -180,10 +216,13 @@ var useScreener = create()(persist((set, get) => ({
 	setStrategy: (strategy) => set({ strategy }),
 	setSector: (sector) => set({ sector }),
 	setQuery: (query) => set({ query }),
+	setSort: (sort) => set({ sort }),
+	setVerdictFilter: (verdictFilter) => set({ verdictFilter }),
 	setResult: (result) => set({
 		result,
 		selected: result?.results[0]?.symbol ?? null,
-		error: null
+		error: null,
+		verdictFilter: "all"
 	}),
 	setSelected: (selected) => set({ selected }),
 	setError: (error) => set({ error }),
@@ -192,8 +231,11 @@ var useScreener = create()(persist((set, get) => ({
 		set({ watchlist: cur.includes(symbol) ? cur.filter((s) => s !== symbol) : [...cur, symbol] });
 	}
 }), {
-	name: "saring-v1",
-	partialize: (s) => ({ watchlist: s.watchlist })
+	name: "saring-v2",
+	partialize: (s) => ({
+		watchlist: s.watchlist,
+		strategy: s.strategy
+	})
 }));
 function FactorBar({ label, value }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -229,6 +271,7 @@ function StockDetail({ stock, onClose }) {
 	const weights = STRATEGIES[strategy].weights;
 	const up = stock.changePct >= 0;
 	const rr = stock.price > stock.levels.stop ? (stock.levels.target - stock.price) / (stock.price - stock.levels.stop) : 0;
+	const f = stock.fundamentals;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "flex h-full flex-col",
 		children: [
@@ -251,14 +294,14 @@ function StockDetail({ stock, onClose }) {
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 						variant: "ghost",
 						size: "icon",
-						className: "size-10",
+						className: "size-11",
 						"aria-label": saved ? "Hapus dari watchlist" : "Simpan ke watchlist",
 						onClick: () => toggleWatch(stock.symbol),
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Star, { className: cn("size-4", saved && "fill-primary text-primary") })
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 						variant: "ghost",
 						size: "icon",
-						className: "size-10",
+						className: "size-11",
 						onClick: onClose,
 						"aria-label": "Tutup",
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { className: "size-4" })
@@ -273,11 +316,17 @@ function StockDetail({ stock, onClose }) {
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 					className: cn("mt-1 font-mono text-sm tabular-nums", up ? "text-up" : "text-down"),
 					children: formatPct(stock.changePct)
-				})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkline, {
+				})] }), stock.spark.length > 2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkline, {
 					values: stock.spark,
 					up,
 					className: "h-10 w-36"
-				})]
+				}) : null]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RangeBar, {
+				className: "mt-4",
+				low: stock.week52Low,
+				high: stock.week52High,
+				value: stock.price
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-5 text-sm leading-relaxed text-foreground/90",
@@ -301,7 +350,7 @@ function StockDetail({ stock, onClose }) {
 				].map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "rounded-xl bg-secondary px-3 py-2.5",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+						className: "text-xs uppercase tracking-wide text-muted-foreground",
 						children: item.k
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "mt-1 font-mono text-sm tabular-nums",
@@ -353,6 +402,30 @@ function StockDetail({ stock, onClose }) {
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
 						label: "Support",
 						value: formatPrice(stock.levels.support)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "PE",
+						value: formatMultiple(f.pe)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "PB",
+						value: formatMultiple(f.pb)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "ROE",
+						value: formatRoe(f.roe)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "Dividen",
+						value: f.divYield != null ? `${f.divYield.toFixed(1)}%` : "—"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "Kap.",
+						value: f.mcap ? `Rp ${formatCompactIDR(f.mcap)}` : "—"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
+						label: "DER",
+						value: formatMultiple(f.de)
 					})
 				]
 			}),
@@ -369,7 +442,7 @@ function StockDetail({ stock, onClose }) {
 			stock.reasons.length ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mt-5",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+					className: "text-xs uppercase tracking-wide text-muted-foreground",
 					children: "Alasan"
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 					className: "mt-2 space-y-1.5 text-sm text-foreground/90",
@@ -382,7 +455,7 @@ function StockDetail({ stock, onClose }) {
 			stock.risks.length ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mt-4",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+					className: "text-xs uppercase tracking-wide text-muted-foreground",
 					children: "Risiko"
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 					className: "mt-2 space-y-1.5 text-sm text-foreground/90",
@@ -395,7 +468,7 @@ function StockDetail({ stock, onClose }) {
 			stock.headlines.length ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mt-5",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+					className: "text-xs uppercase tracking-wide text-muted-foreground",
 					children: "Berita"
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 					className: "mt-2 space-y-2",
@@ -421,7 +494,7 @@ function Meta({ label, value }) {
 			className: "text-muted-foreground",
 			children: label
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-			className: "font-mono text-[13px] tabular-nums",
+			className: "font-mono text-xs tabular-nums",
 			children: value
 		})]
 	});
@@ -432,43 +505,55 @@ function Input({ className, ...props }) {
 		...props
 	});
 }
-var createSsrRpc = (functionId) => {
-	const url = "/_serverFn/" + functionId;
-	const serverFnMeta = { id: functionId };
-	const fn = async (...args) => {
-		return (await getServerFnById(functionId, { origin: "server" }))(...args);
-	};
-	return Object.assign(fn, {
-		url,
-		serverFnMeta,
-		[TSS_SERVER_FUNCTION]: true
-	});
-};
-var strategySchema = _enum([
-	"intraday",
-	"swing",
-	"invest"
-]);
-var getMarketOverview = createServerFn({ method: "GET" }).handler(createSsrRpc("188d632fbf615078a692c25743dd576addb6c625e679120cf0a02b872af73ecd"));
-var runScreen = createServerFn({ method: "POST" }).validator((input) => object({
-	strategy: strategySchema,
-	sector: string().optional()
-}).parse(input)).handler(createSsrRpc("6eaf54abdfd734364375eee1d24f9c131579fc8e6952e40428d59ffcf07f3b9f"));
 var STEPS = [
-	"Mengambil harga dan volume emiten BEI…",
-	"Menghitung RSI, MACD, SMA, dan volume relatif…",
+	"Mengambil papan BEI — teknikal dan fundamental…",
+	"Menyaring likuiditas sesuai strategi…",
 	"Memindai headline dan sentimen berita…",
-	"Menyusun peringkat sesuai strategi…"
+	"Menyusun peringkat kandidat beli…"
 ];
 var VERDICT_COPY = {
 	beli: "Beli",
 	pertimbangkan: "Timbang",
 	tunggu: "Tunggu"
 };
-function HomeView() {
+var SORT_OPTIONS = [
+	{
+		id: "score",
+		label: "Skor"
+	},
+	{
+		id: "change",
+		label: "%"
+	},
+	{
+		id: "value",
+		label: "Nilai"
+	},
+	{
+		id: "rsi",
+		label: "RSI"
+	}
+];
+var VERDICT_FILTERS = [
+	{
+		id: "all",
+		label: "Semua"
+	},
+	{
+		id: "beli",
+		label: "Beli"
+	},
+	{
+		id: "pertimbangkan",
+		label: "Timbang"
+	}
+];
+function HomeView({ initialMarket }) {
 	const strategy = useScreener((s) => s.strategy);
 	const sector = useScreener((s) => s.sector);
 	const query = useScreener((s) => s.query);
+	const sort = useScreener((s) => s.sort);
+	const verdictFilter = useScreener((s) => s.verdictFilter);
 	const result = useScreener((s) => s.result);
 	const selected = useScreener((s) => s.selected);
 	const watchlist = useScreener((s) => s.watchlist);
@@ -476,6 +561,8 @@ function HomeView() {
 	const setStrategy = useScreener((s) => s.setStrategy);
 	const setSector = useScreener((s) => s.setSector);
 	const setQuery = useScreener((s) => s.setQuery);
+	const setSort = useScreener((s) => s.setSort);
+	const setVerdictFilter = useScreener((s) => s.setVerdictFilter);
 	const setResult = useScreener((s) => s.setResult);
 	const setSelected = useScreener((s) => s.setSelected);
 	const setError = useScreener((s) => s.setError);
@@ -485,6 +572,7 @@ function HomeView() {
 	const marketQuery = useQuery({
 		queryKey: ["ihsg"],
 		queryFn: () => getMarketOverview(),
+		initialData: initialMarket,
 		refetchInterval: 9e4
 	});
 	const mutation = useMutation({
@@ -503,7 +591,7 @@ function HomeView() {
 	(0, import_react.useEffect)(() => {
 		if (!mutation.isPending) return;
 		setStep(0);
-		const id = window.setInterval(() => setStep((s) => (s + 1) % STEPS.length), 2200);
+		const id = window.setInterval(() => setStep((s) => (s + 1) % STEPS.length), 1800);
 		return () => window.clearInterval(id);
 	}, [mutation.isPending]);
 	const market = result?.market ?? marketQuery.data;
@@ -511,16 +599,26 @@ function HomeView() {
 	const filtered = (0, import_react.useMemo)(() => {
 		const rows = result?.results ?? [];
 		const q = query.trim().toUpperCase();
-		return rows.filter((r) => {
+		const next = rows.filter((r) => {
 			if (watchOnly && !watchlist.includes(r.symbol)) return false;
+			if (verdictFilter !== "all" && r.verdict !== verdictFilter) return false;
 			if (!q) return true;
 			return r.symbol.includes(q) || r.name.toUpperCase().includes(q) || r.sector.toUpperCase().includes(q);
 		});
+		next.sort((a, b) => {
+			if (sort === "change") return b.changePct - a.changePct;
+			if (sort === "value") return b.value - a.value;
+			if (sort === "rsi") return (b.indicators.rsi ?? 0) - (a.indicators.rsi ?? 0);
+			return b.scores.total - a.scores.total;
+		});
+		return next;
 	}, [
 		result,
 		query,
 		watchOnly,
-		watchlist
+		watchlist,
+		sort,
+		verdictFilter
 	]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "relative mx-auto min-h-dvh w-full max-w-[1320px] px-4 pb-16 pt-5 sm:px-6 lg:px-8",
@@ -528,10 +626,10 @@ function HomeView() {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 				className: "saring-enter flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground",
+					className: "text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground",
 					children: "Screener saham BEI"
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "mt-1 font-display text-[2.4rem] italic leading-none tracking-tight sm:text-5xl",
+					className: "mt-1 font-display text-4xl italic leading-none tracking-tight sm:text-5xl",
 					children: "saring"
 				})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarketChip, {
 					price: market?.price,
@@ -549,19 +647,39 @@ function HomeView() {
 						type: "button",
 						onClick: () => setStrategy(id),
 						className: cn("rounded-3xl p-4 text-left shadow-[var(--shadow-border)] transition-[background-color,box-shadow,transform] duration-200 ease-out", "hover:shadow-[var(--shadow-border-hover)] active:scale-[0.99]", active ? "bg-primary text-primary-foreground" : "bg-card text-foreground"),
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex items-baseline justify-between gap-3",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "font-display text-xl tracking-tight",
-								children: item.label
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: cn("font-mono text-[11px] uppercase tracking-wide", active ? "text-primary-foreground/70" : "text-muted-foreground"),
-								children: item.horizon
-							})]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: cn("mt-2 text-sm leading-relaxed", active ? "text-primary-foreground/80" : "text-muted-foreground"),
-							children: item.blurb
-						})]
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-baseline justify-between gap-3",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "font-display text-xl tracking-tight",
+									children: item.label
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: cn("font-mono text-xs uppercase tracking-wide", active ? "text-primary-foreground/70" : "text-muted-foreground"),
+									children: item.horizon
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: cn("mt-2 text-sm leading-relaxed", active ? "text-primary-foreground/80" : "text-muted-foreground"),
+								children: item.blurb
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: cn("mt-4 flex h-1 overflow-hidden rounded-full", active ? "bg-primary-foreground/15" : "bg-secondary"),
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: cn("h-full", active ? "bg-primary-foreground" : "bg-foreground/70"),
+										style: { flexGrow: item.weights.technical }
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: cn("h-full", active ? "bg-primary-foreground/60" : "bg-foreground/40"),
+										style: { flexGrow: item.weights.fundamental }
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: cn("h-full", active ? "bg-primary-foreground/30" : "bg-foreground/20"),
+										style: { flexGrow: item.weights.sentiment }
+									})
+								]
+							})
+						]
 					}, id);
 				})
 			}),
@@ -605,10 +723,9 @@ function HomeView() {
 				]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-				className: "mt-3 text-[13px] text-muted-foreground",
+				className: "mt-3 text-sm text-muted-foreground",
 				children: [
-					UNIVERSE.length,
-					" emiten likuid · teknikal, fundamental, dan sentimen berita · strategi",
+					"Seluruh papan BEI · teknikal, fundamental, dan sentimen berita · strategi",
 					" ",
 					STRATEGIES[strategy].label.toLowerCase()
 				]
@@ -633,14 +750,36 @@ function HomeView() {
 								" kandidat dari ",
 								result.scanned,
 								" emiten",
+								` · ${result.eligible} lolos likuiditas`,
 								result.asOf ? ` · ${formatJakarta(result.asOf)}` : ""
 							]
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 							type: "button",
 							onClick: () => setWatchOnly((v) => !v),
-							className: cn("inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors duration-150", watchOnly ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"),
+							className: cn("inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-sm transition-colors duration-150", watchOnly ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"),
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Star, { className: cn("size-3.5", watchOnly && "fill-current") }), "Tersimpan"]
 						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "mt-3 flex flex-wrap items-center gap-2",
+						children: [
+							VERDICT_FILTERS.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => setVerdictFilter(f.id),
+								className: cn("inline-flex h-9 items-center rounded-full px-3 text-sm transition-colors duration-150", verdictFilter === f.id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"),
+								children: f.label
+							}, f.id)),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "mx-1 text-muted-foreground",
+								children: "·"
+							}),
+							SORT_OPTIONS.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => setSort(s.id),
+								className: cn("inline-flex h-9 items-center rounded-full px-3 text-sm transition-colors duration-150", sort === s.id ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"),
+								children: s.label
+							}, s.id))
+						]
 					}),
 					result.note ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "mt-3 rounded-2xl bg-warn/10 px-4 py-3 text-sm text-warn",
@@ -660,7 +799,7 @@ function HomeView() {
 									className: "flex min-w-0 flex-1 items-center gap-3",
 									children: [
 										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "hidden w-5 font-mono text-[12px] text-muted-foreground tabular-nums sm:block",
+											className: "hidden w-5 font-mono text-xs text-muted-foreground tabular-nums sm:block",
 											children: String(i + 1).padStart(2, "0")
 										}),
 										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScoreRing, {
@@ -679,14 +818,21 @@ function HomeView() {
 													children: VERDICT_COPY[row.verdict]
 												})]
 											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-												className: "truncate text-[13px] text-muted-foreground",
+												className: "truncate text-sm text-muted-foreground",
 												children: row.name
 											})]
 										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkline, {
+										row.spark.length > 2 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkline, {
 											values: row.spark,
 											up,
 											className: "hidden h-8 w-24 shrink-0 md:block"
+										}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											className: "hidden w-28 shrink-0 md:block",
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RangeBar, {
+												low: row.week52Low,
+												high: row.week52High,
+												value: row.price
+											})
 										}),
 										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 											className: "shrink-0 text-right",
@@ -694,14 +840,14 @@ function HomeView() {
 												className: "font-mono text-sm tabular-nums",
 												children: formatPrice(row.price)
 											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-												className: cn("font-mono text-[12px] tabular-nums", up ? "text-up" : "text-down"),
+												className: cn("font-mono text-xs tabular-nums", up ? "text-up" : "text-down"),
 												children: formatPct(row.changePct)
 											})]
 										})
 									]
 								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 									type: "button",
-									className: "grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground",
+									className: "grid size-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground",
 									"aria-label": saved ? "Hapus dari watchlist" : "Simpan",
 									onClick: () => toggleWatch(row.symbol),
 									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Star, { className: cn("size-4", saved && "fill-primary text-primary") })
@@ -733,8 +879,8 @@ function HomeView() {
 				onRun: () => mutation.mutate()
 			}) : null,
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("footer", {
-				className: "mt-16 max-w-2xl text-[12px] leading-relaxed text-muted-foreground",
-				children: ["Saring memindai emiten likuid BEI dari data pasar publik, indikator teknikal, kualitas emiten, dan sentimen berita. Ini bukan saran investasi, ajakan membeli, atau jaminan imbal hasil. Selalu verifikasi ke sumber resmi dan sesuaikan dengan profil risiko Anda.", result && !result.sentimentEnabled ? " Analisis sentimen AI tidak aktif pada sesi ini." : ""]
+				className: "mt-16 max-w-2xl text-xs leading-relaxed text-muted-foreground",
+				children: ["Saring memindai emiten BEI dari data pasar publik: indikator teknikal, fundamental (PE, ROE, dividen, kapitalisasi), dan sentimen berita. Ini bukan saran investasi, ajakan membeli, atau jaminan imbal hasil. Selalu verifikasi ke sumber resmi dan sesuaikan dengan profil risiko Anda.", result && !result.sentimentEnabled ? " Analisis sentimen AI tidak aktif pada sesi ini — skor berita memakai headline." : ""]
 			})
 		]
 	});
@@ -747,7 +893,7 @@ function MarketChip({ price, changePct, statusLabel, asOf }) {
 			className: "flex items-baseline gap-2",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "text-[11px] uppercase tracking-wide text-muted-foreground",
+					className: "text-xs uppercase tracking-wide text-muted-foreground",
 					children: "IHSG"
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
@@ -760,7 +906,7 @@ function MarketChip({ price, changePct, statusLabel, asOf }) {
 				})
 			]
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-			className: "mt-0.5 text-[12px] text-muted-foreground",
+			className: "mt-0.5 text-xs text-muted-foreground",
 			children: [statusLabel ?? "Memuat", asOf ? ` · ${formatJakarta(asOf)}` : ""]
 		})]
 	});
@@ -779,20 +925,18 @@ function LoadingPanel({ step, strategy }) {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6",
-				children: UNIVERSE.slice(0, 12).map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "rounded-xl bg-secondary px-2 py-2 text-center font-mono text-[11px] text-muted-foreground",
+				children: MOSAIC.map((symbol, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "rounded-xl bg-secondary px-2 py-2 text-center font-mono text-xs text-muted-foreground",
 					style: { opacity: .35 + (i + step) % 5 * .12 },
-					children: s.symbol
-				}, s.symbol))
+					children: symbol
+				}, symbol))
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-				className: "mt-5 text-[13px] text-muted-foreground",
+				className: "mt-5 text-sm text-muted-foreground",
 				children: [
 					"Strategi ",
 					STRATEGIES[strategy].label,
-					" · ",
-					UNIVERSE.length,
-					" emiten. Biasanya 8–15 detik."
+					" · seluruh emiten likuid. Biasanya 5–10 detik."
 				]
 			})
 		]
@@ -818,6 +962,16 @@ function EmptyState({ strategy, onRun }) {
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "mt-2 size-1 shrink-0 rounded-full bg-primary" }), line]
 				}, line))
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
+				className: "mt-6 max-w-xl text-sm text-muted-foreground",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", {
+					className: "cursor-pointer text-foreground",
+					children: "Bagaimana skor dihitung"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 leading-relaxed",
+					children: "Setiap emiten dinilai 0–100 dari tiga faktor sesuai strategi: teknikal (RSI, SMA, MACD, volume relatif), fundamental (PE, ROE, dividen, kapitalisasi, likuiditas), dan sentimen berita. Hanya yang cukup likuid yang naik ke daftar kandidat."
+				})]
+			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
 				className: "mt-7",
 				onClick: onRun,
@@ -827,7 +981,8 @@ function EmptyState({ strategy, onRun }) {
 	});
 }
 function Home() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HomeView, {});
+	const market = Route.useLoaderData();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HomeView, { initialMarket: market });
 }
 //#endregion
 export { Home as component };

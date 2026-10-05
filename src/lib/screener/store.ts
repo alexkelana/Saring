@@ -2,10 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ScreenResult, StrategyId } from "./types";
 
+export type SortKey = "score" | "change" | "value" | "rsi";
+export type VerdictFilter = "all" | "beli" | "pertimbangkan" | "tunggu";
+
 type ScreenerState = {
   strategy: StrategyId;
   sector: string;
   query: string;
+  sort: SortKey;
+  verdictFilter: VerdictFilter;
   result: ScreenResult | null;
   selected: string | null;
   watchlist: string[];
@@ -13,6 +18,8 @@ type ScreenerState = {
   setStrategy: (strategy: StrategyId) => void;
   setSector: (sector: string) => void;
   setQuery: (query: string) => void;
+  setSort: (sort: SortKey) => void;
+  setVerdictFilter: (verdictFilter: VerdictFilter) => void;
   setResult: (result: ScreenResult | null) => void;
   setSelected: (selected: string | null) => void;
   setError: (error: string | null) => void;
@@ -25,6 +32,8 @@ export const useScreener = create<ScreenerState>()(
       strategy: "swing",
       sector: "Semua",
       query: "",
+      sort: "score",
+      verdictFilter: "all",
       result: null,
       selected: null,
       watchlist: [],
@@ -32,8 +41,10 @@ export const useScreener = create<ScreenerState>()(
       setStrategy: (strategy) => set({ strategy }),
       setSector: (sector) => set({ sector }),
       setQuery: (query) => set({ query }),
+      setSort: (sort) => set({ sort }),
+      setVerdictFilter: (verdictFilter) => set({ verdictFilter }),
       setResult: (result) =>
-        set({ result, selected: result?.results[0]?.symbol ?? null, error: null }),
+        set({ result, selected: result?.results[0]?.symbol ?? null, error: null, verdictFilter: "all" }),
       setSelected: (selected) => set({ selected }),
       setError: (error) => set({ error }),
       toggleWatch: (symbol) => {
@@ -44,8 +55,8 @@ export const useScreener = create<ScreenerState>()(
       },
     }),
     {
-      name: "saring-v1",
-      partialize: (s) => ({ watchlist: s.watchlist }),
+      name: "saring-v2",
+      partialize: (s) => ({ watchlist: s.watchlist, strategy: s.strategy }),
     },
   ),
 );

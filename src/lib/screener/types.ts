@@ -66,6 +66,7 @@ export type ChartBundle = {
 
 export type Indicators = {
   rsi: number | null;
+  rsiHour: number | null;
   sma20: number | null;
   sma50: number | null;
   sma200: number | null;
@@ -79,6 +80,16 @@ export type Indicators = {
   pos52w: number | null;
   sma50Slope: number | null;
   sma200Slope: number | null;
+};
+
+export type Fundamentals = {
+  pe: number | null;
+  pb: number | null;
+  roe: number | null;
+  de: number | null;
+  divYield: number | null;
+  epsGrowth: number | null;
+  mcap: number | null;
 };
 
 export type Levels = {
@@ -105,6 +116,7 @@ export type StockResult = {
   symbol: string;
   name: string;
   sector: Sector;
+  industry: string;
   size: Size;
   flags: StockFlags;
   price: number;
@@ -113,6 +125,8 @@ export type StockResult = {
   volume: number;
   value: number;
   spark: number[];
+  week52High: number | null;
+  week52Low: number | null;
   scores: FactorScores;
   verdict: Verdict;
   reasons: string[];
@@ -120,6 +134,7 @@ export type StockResult = {
   thesis: string;
   levels: Levels;
   indicators: Indicators;
+  fundamentals: Fundamentals;
   headlines: Headline[];
   lastDiv?: { amount: number; date: number };
 };
@@ -140,6 +155,7 @@ export type ScreenResult = {
   asOf: number;
   market: MarketSnapshot;
   scanned: number;
+  eligible: number;
   failed: number;
   qualified: number;
   results: StockResult[];

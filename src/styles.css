@@ -46,6 +46,7 @@
   html {
     background: var(--color-background);
     color: var(--color-foreground);
+    color-scheme: dark;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

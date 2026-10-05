@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { runScreening } from "./screen";
-import { fetchIhsg } from "./yahoo";
+import { fetchIhsg } from "./tradingview";
 
 const strategySchema = z.enum(["intraday", "swing", "invest"]);
 

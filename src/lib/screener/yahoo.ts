@@ -5,11 +5,8 @@ const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
 const TTL_MS = 12 * 60 * 1000;
-
 type CacheEntry<T> = { at: number; value: T };
-
 const chartCache = new Map<string, CacheEntry<ChartBundle | null>>();
-let marketCache: CacheEntry<MarketSnapshot> | null = null;
 
 function fromCache<T>(entry: CacheEntry<T> | undefined | null): T | null {
   if (!entry) return null;
@@ -69,11 +66,10 @@ type YahooChart = {
         dividends?: Record<string, { amount?: number; date?: number }>;
       };
     }>;
-    error?: { description?: string };
   };
 };
 
-async function fetchJson<T>(url: string, timeoutMs = 9000): Promise<T | null> {
+async function fetchJson<T>(url: string, timeoutMs = 4000): Promise<T | null> {
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": UA, Accept: "application/json" },
@@ -86,17 +82,14 @@ async function fetchJson<T>(url: string, timeoutMs = 9000): Promise<T | null> {
   }
 }
 
-export async function fetchChart(
-  symbol: string,
-  range = "1y",
-): Promise<ChartBundle | null> {
+export async function fetchChart(symbol: string, range = "6mo"): Promise<ChartBundle | null> {
   const y = yahooSymbol(symbol);
   const key = `${y}:${range}`;
   const hit = fromCache(chartCache.get(key));
   if (hit !== null) return hit;
 
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(y)}?range=${range}&interval=1d&events=div`;
-  const data = await fetchJson<YahooChart>(url);
+  const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(y)}?range=${range}&interval=1d&events=div`;
+  const data = await fetchJson<YahooChart>(url, 4000);
   const result = data?.chart?.result?.[0];
   if (!result?.timestamp?.length || !result.indicators?.quote?.[0]) {
     chartCache.set(key, { at: Date.now(), value: null });
@@ -120,7 +113,7 @@ export async function fetchChart(
       v: typeof v === "number" && Number.isFinite(v) ? v : 0,
     });
   }
-  if (bars.length < 20) {
+  if (bars.length < 12) {
     chartCache.set(key, { at: Date.now(), value: null });
     return null;
   }
@@ -152,8 +145,12 @@ export async function fetchChart(
 }
 
 export async function fetchCharts(symbols: string[]): Promise<ChartBundle[]> {
-  const rows = await mapPool(symbols, 14, async (symbol) => fetchChart(symbol));
-  return rows.filter((r): r is ChartBundle => r !== null);
+  try {
+    const rows = await mapPool(symbols.slice(0, 12), 5, async (symbol) => fetchChart(symbol));
+    return rows.filter((r): r is ChartBundle => r !== null);
+  } catch {
+    return [];
+  }
 }
 
 export function jakartaParts(date = new Date()) {
@@ -184,29 +181,4 @@ export function marketStatus(): Pick<MarketSnapshot, "status" | "statusLabel"> {
   if (mins >= 11 * 60 + 30 && mins < 13 * 60 + 30) return { status: "break", statusLabel: "Istirahat" };
   if (mins >= 13 * 60 + 30 && mins < 16 * 60) return { status: "open", statusLabel: "Sesi 2" };
   return { status: "closed", statusLabel: "Tutup" };
-}
-
-export async function fetchIhsg(): Promise<MarketSnapshot> {
-  const hit = fromCache(marketCache);
-  if (hit) return hit;
-  const data = await fetchJson<YahooChart>(
-    "https://query1.finance.yahoo.com/v8/finance/chart/%5EJKSE?range=5d&interval=1d",
-    8000,
-  );
-  const meta = data?.chart?.result?.[0]?.meta;
-  const { status, statusLabel } = marketStatus();
-  const price = meta?.regularMarketPrice ?? 0;
-  const prev = meta?.chartPreviousClose ?? 0;
-  const changePct = prev ? ((price - prev) / prev) * 100 : (meta?.regularMarketChangePercent ?? 0);
-  const snapshot: MarketSnapshot = {
-    price,
-    changePct,
-    name: meta?.shortName ?? "IHSG",
-    asOf: (meta?.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000,
-    status,
-    statusLabel,
-    trend: changePct > 0.15 ? "naik" : changePct < -0.15 ? "turun" : "datar",
-  };
-  marketCache = { at: Date.now(), value: snapshot };
-  return snapshot;
 }

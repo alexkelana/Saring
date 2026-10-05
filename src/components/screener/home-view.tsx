@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Loader2, Search, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { RangeBar } from "@/components/screener/range-bar";
 import { ScoreRing } from "@/components/screener/score-ring";
 import { Sparkline } from "@/components/screener/sparkline";
 import { StockDetail } from "@/components/screener/stock-detail";
@@ -13,16 +14,16 @@ import { Input } from "@/components/ui/input";
 import { getMarketOverview, runScreen } from "@/lib/screener/actions";
 import { formatJakarta, formatPct, formatPrice } from "@/lib/screener/format";
 import { STRATEGIES, STRATEGY_ORDER } from "@/lib/screener/strategies";
-import { useScreener } from "@/lib/screener/store";
+import { useScreener, type SortKey, type VerdictFilter } from "@/lib/screener/store";
 import type { MarketSnapshot, StrategyId } from "@/lib/screener/types";
-import { SECTORS, UNIVERSE } from "@/lib/screener/universe";
+import { MOSAIC, SECTORS } from "@/lib/screener/universe";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
-  "Mengambil harga dan volume emiten BEI…",
-  "Menghitung RSI, MACD, SMA, dan volume relatif…",
+  "Mengambil papan BEI — teknikal dan fundamental…",
+  "Menyaring likuiditas sesuai strategi…",
   "Memindai headline dan sentimen berita…",
-  "Menyusun peringkat sesuai strategi…",
+  "Menyusun peringkat kandidat beli…",
 ];
 
 const VERDICT_COPY = {
@@ -31,10 +32,25 @@ const VERDICT_COPY = {
   tunggu: "Tunggu",
 };
 
+const SORT_OPTIONS: { id: SortKey; label: string }[] = [
+  { id: "score", label: "Skor" },
+  { id: "change", label: "%" },
+  { id: "value", label: "Nilai" },
+  { id: "rsi", label: "RSI" },
+];
+
+const VERDICT_FILTERS: { id: VerdictFilter; label: string }[] = [
+  { id: "all", label: "Semua" },
+  { id: "beli", label: "Beli" },
+  { id: "pertimbangkan", label: "Timbang" },
+];
+
 export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) {
   const strategy = useScreener((s) => s.strategy);
   const sector = useScreener((s) => s.sector);
   const query = useScreener((s) => s.query);
+  const sort = useScreener((s) => s.sort);
+  const verdictFilter = useScreener((s) => s.verdictFilter);
   const result = useScreener((s) => s.result);
   const selected = useScreener((s) => s.selected);
   const watchlist = useScreener((s) => s.watchlist);
@@ -42,6 +58,8 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
   const setStrategy = useScreener((s) => s.setStrategy);
   const setSector = useScreener((s) => s.setSector);
   const setQuery = useScreener((s) => s.setQuery);
+  const setSort = useScreener((s) => s.setSort);
+  const setVerdictFilter = useScreener((s) => s.setVerdictFilter);
   const setResult = useScreener((s) => s.setResult);
   const setSelected = useScreener((s) => s.setSelected);
   const setError = useScreener((s) => s.setError);
@@ -72,7 +90,7 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
   useEffect(() => {
     if (!mutation.isPending) return;
     setStep(0);
-    const id = window.setInterval(() => setStep((s) => (s + 1) % STEPS.length), 2200);
+    const id = window.setInterval(() => setStep((s) => (s + 1) % STEPS.length), 1800);
     return () => window.clearInterval(id);
   }, [mutation.isPending]);
 
@@ -82,21 +100,29 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
   const filtered = useMemo(() => {
     const rows = result?.results ?? [];
     const q = query.trim().toUpperCase();
-    return rows.filter((r) => {
+    const next = rows.filter((r) => {
       if (watchOnly && !watchlist.includes(r.symbol)) return false;
+      if (verdictFilter !== "all" && r.verdict !== verdictFilter) return false;
       if (!q) return true;
       return r.symbol.includes(q) || r.name.toUpperCase().includes(q) || r.sector.toUpperCase().includes(q);
     });
-  }, [result, query, watchOnly, watchlist]);
+    next.sort((a, b) => {
+      if (sort === "change") return b.changePct - a.changePct;
+      if (sort === "value") return b.value - a.value;
+      if (sort === "rsi") return (b.indicators.rsi ?? 0) - (a.indicators.rsi ?? 0);
+      return b.scores.total - a.scores.total;
+    });
+    return next;
+  }, [result, query, watchOnly, watchlist, sort, verdictFilter]);
 
   return (
     <div className="relative mx-auto min-h-dvh w-full max-w-[1320px] px-4 pb-16 pt-5 sm:px-6 lg:px-8">
       <header className="saring-enter flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
             Screener saham BEI
           </p>
-          <h1 className="mt-1 font-display text-[2.4rem] italic leading-none tracking-tight sm:text-5xl">
+          <h1 className="mt-1 font-display text-4xl italic leading-none tracking-tight sm:text-5xl">
             saring
           </h1>
         </div>
@@ -127,7 +153,7 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
                 <span className="font-display text-xl tracking-tight">{item.label}</span>
                 <span
                   className={cn(
-                    "font-mono text-[11px] uppercase tracking-wide",
+                    "font-mono text-xs uppercase tracking-wide",
                     active ? "text-primary-foreground/70" : "text-muted-foreground",
                   )}
                 >
@@ -142,6 +168,25 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
               >
                 {item.blurb}
               </p>
+              <div
+                className={cn(
+                  "mt-4 flex h-1 overflow-hidden rounded-full",
+                  active ? "bg-primary-foreground/15" : "bg-secondary",
+                )}
+              >
+                <span
+                  className={cn("h-full", active ? "bg-primary-foreground" : "bg-foreground/70")}
+                  style={{ flexGrow: item.weights.technical }}
+                />
+                <span
+                  className={cn("h-full", active ? "bg-primary-foreground/60" : "bg-foreground/40")}
+                  style={{ flexGrow: item.weights.fundamental }}
+                />
+                <span
+                  className={cn("h-full", active ? "bg-primary-foreground/30" : "bg-foreground/20")}
+                  style={{ flexGrow: item.weights.sentiment }}
+                />
+              </div>
             </button>
           );
         })}
@@ -184,8 +229,8 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
         </Button>
       </section>
 
-      <p className="mt-3 text-[13px] text-muted-foreground">
-        {UNIVERSE.length} emiten likuid · teknikal, fundamental, dan sentimen berita · strategi{" "}
+      <p className="mt-3 text-sm text-muted-foreground">
+        Seluruh papan BEI · teknikal, fundamental, dan sentimen berita · strategi{" "}
         {STRATEGIES[strategy].label.toLowerCase()}
       </p>
 
@@ -200,13 +245,14 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 {result.qualified} kandidat dari {result.scanned} emiten
+                {` · ${result.eligible} lolos likuiditas`}
                 {result.asOf ? ` · ${formatJakarta(result.asOf)}` : ""}
               </p>
               <button
                 type="button"
                 onClick={() => setWatchOnly((v) => !v)}
                 className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors duration-150",
+                  "inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-sm transition-colors duration-150",
                   watchOnly ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
                 )}
               >
@@ -214,6 +260,39 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
                 Tersimpan
               </button>
             </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {VERDICT_FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setVerdictFilter(f.id)}
+                  className={cn(
+                    "inline-flex h-9 items-center rounded-full px-3 text-sm transition-colors duration-150",
+                    verdictFilter === f.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground",
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+              <span className="mx-1 text-muted-foreground">·</span>
+              {SORT_OPTIONS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSort(s.id)}
+                  className={cn(
+                    "inline-flex h-9 items-center rounded-full px-3 text-sm transition-colors duration-150",
+                    sort === s.id ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
             {result.note ? (
               <p className="mt-3 rounded-2xl bg-warn/10 px-4 py-3 text-sm text-warn">{result.note}</p>
             ) : null}
@@ -236,7 +315,7 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
                         onClick={() => setSelected(row.symbol)}
                         className="flex min-w-0 flex-1 items-center gap-3"
                       >
-                        <span className="hidden w-5 font-mono text-[12px] text-muted-foreground tabular-nums sm:block">
+                        <span className="hidden w-5 font-mono text-xs text-muted-foreground tabular-nums sm:block">
                           {String(i + 1).padStart(2, "0")}
                         </span>
                         <ScoreRing value={row.scores.total} size={44} />
@@ -245,23 +324,29 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
                             <span className="font-medium tracking-tight">{row.symbol}</span>
                             <Badge variant={row.verdict}>{VERDICT_COPY[row.verdict]}</Badge>
                           </div>
-                          <p className="truncate text-[13px] text-muted-foreground">{row.name}</p>
+                          <p className="truncate text-sm text-muted-foreground">{row.name}</p>
                         </div>
-                        <Sparkline
-                          values={row.spark}
-                          up={up}
-                          className="hidden h-8 w-24 shrink-0 md:block"
-                        />
+                        {row.spark.length > 2 ? (
+                          <Sparkline
+                            values={row.spark}
+                            up={up}
+                            className="hidden h-8 w-24 shrink-0 md:block"
+                          />
+                        ) : (
+                          <div className="hidden w-28 shrink-0 md:block">
+                            <RangeBar low={row.week52Low} high={row.week52High} value={row.price} />
+                          </div>
+                        )}
                         <div className="shrink-0 text-right">
                           <p className="font-mono text-sm tabular-nums">{formatPrice(row.price)}</p>
-                          <p className={cn("font-mono text-[12px] tabular-nums", up ? "text-up" : "text-down")}>
+                          <p className={cn("font-mono text-xs tabular-nums", up ? "text-up" : "text-down")}>
                             {formatPct(row.changePct)}
                           </p>
                         </div>
                       </button>
                       <button
                         type="button"
-                        className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+                        className="grid size-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"
                         aria-label={saved ? "Hapus dari watchlist" : "Simpan"}
                         onClick={() => toggleWatch(row.symbol)}
                       >
@@ -302,11 +387,11 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
         <EmptyState strategy={strategy} onRun={() => mutation.mutate()} />
       ) : null}
 
-      <footer className="mt-16 max-w-2xl text-[12px] leading-relaxed text-muted-foreground">
-        Saring memindai emiten likuid BEI dari data pasar publik, indikator teknikal, kualitas emiten, dan
-        sentimen berita. Ini bukan saran investasi, ajakan membeli, atau jaminan imbal hasil. Selalu verifikasi
-        ke sumber resmi dan sesuaikan dengan profil risiko Anda.
-        {result && !result.sentimentEnabled ? " Analisis sentimen AI tidak aktif pada sesi ini." : ""}
+      <footer className="mt-16 max-w-2xl text-xs leading-relaxed text-muted-foreground">
+        Saring memindai emiten BEI dari data pasar publik: indikator teknikal, fundamental (PE, ROE, dividen,
+        kapitalisasi), dan sentimen berita. Ini bukan saran investasi, ajakan membeli, atau jaminan imbal
+        hasil. Selalu verifikasi ke sumber resmi dan sesuaikan dengan profil risiko Anda.
+        {result && !result.sentimentEnabled ? " Analisis sentimen AI tidak aktif pada sesi ini — skor berita memakai headline." : ""}
       </footer>
     </div>
   );
@@ -327,13 +412,13 @@ function MarketChip({
   return (
     <div className="rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
       <div className="flex items-baseline gap-2">
-        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">IHSG</span>
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">IHSG</span>
         <span className="font-mono text-lg tabular-nums">{price ? formatPrice(price) : "—"}</span>
         <span className={cn("font-mono text-sm tabular-nums", up ? "text-up" : "text-down")}>
           {changePct != null ? formatPct(changePct) : ""}
         </span>
       </div>
-      <p className="mt-0.5 text-[12px] text-muted-foreground">
+      <p className="mt-0.5 text-xs text-muted-foreground">
         {statusLabel ?? "Memuat"}
         {asOf ? ` · ${formatJakarta(asOf)}` : ""}
       </p>
@@ -347,18 +432,18 @@ function LoadingPanel({ step, strategy }: { step: number; strategy: StrategyId }
       <p className="font-display text-2xl tracking-tight">Memindai papan BEI</p>
       <p className="shimmer-text mt-2 text-sm">{STEPS[step]}</p>
       <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-6">
-        {UNIVERSE.slice(0, 12).map((s, i) => (
+        {MOSAIC.map((symbol, i) => (
           <div
-            key={s.symbol}
-            className="rounded-xl bg-secondary px-2 py-2 text-center font-mono text-[11px] text-muted-foreground"
+            key={symbol}
+            className="rounded-xl bg-secondary px-2 py-2 text-center font-mono text-xs text-muted-foreground"
             style={{ opacity: 0.35 + ((i + step) % 5) * 0.12 }}
           >
-            {s.symbol}
+            {symbol}
           </div>
         ))}
       </div>
-      <p className="mt-5 text-[13px] text-muted-foreground">
-        Strategi {STRATEGIES[strategy].label} · {UNIVERSE.length} emiten. Biasanya 8–15 detik.
+      <p className="mt-5 text-sm text-muted-foreground">
+        Strategi {STRATEGIES[strategy].label} · seluruh emiten likuid. Biasanya 5–10 detik.
       </p>
     </div>
   );
@@ -378,6 +463,14 @@ function EmptyState({ strategy, onRun }: { strategy: StrategyId; onRun: () => vo
           </li>
         ))}
       </ul>
+      <details className="mt-6 max-w-xl text-sm text-muted-foreground">
+        <summary className="cursor-pointer text-foreground">Bagaimana skor dihitung</summary>
+        <p className="mt-2 leading-relaxed">
+          Setiap emiten dinilai 0–100 dari tiga faktor sesuai strategi: teknikal (RSI, SMA, MACD, volume
+          relatif), fundamental (PE, ROE, dividen, kapitalisasi, likuiditas), dan sentimen berita. Hanya yang
+          cukup likuid yang naik ke daftar kandidat.
+        </p>
+      </details>
       <Button className="mt-7" onClick={onRun}>
         Jalankan screening
         <ArrowUpRight className="size-4" />

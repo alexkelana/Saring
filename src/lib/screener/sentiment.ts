@@ -34,6 +34,9 @@ function extractJson(text: string): unknown {
   }
 }
 
+const aiCache = new Map<string, { at: number; value: { enabled: boolean; rows: SentimentRow[] } }>();
+const AI_TTL = 30 * 60 * 1000;
+
 export async function scoreSentiment(input: {
   strategy: StrategyId;
   market: string;
@@ -50,7 +53,11 @@ export async function scoreSentiment(input: {
   const apiKey = process.env.XAI_API_KEY;
   if (!apiKey || input.stocks.length === 0) return { enabled: false, rows: [] };
 
-  const compact = input.stocks.map((s) => ({
+  const cacheKey = `${input.strategy}:${input.stocks.map((s) => s.symbol).join(",")}`;
+  const hit = aiCache.get(cacheKey);
+  if (hit && Date.now() - hit.at < AI_TTL) return hit.value;
+
+  const compact = input.stocks.slice(0, 8).map((s) => ({
     symbol: s.symbol,
     name: s.name,
     sector: s.sector,
@@ -83,11 +90,11 @@ ${JSON.stringify(compact)}`;
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      signal: AbortSignal.timeout(22000),
+      signal: AbortSignal.timeout(7000),
       body: JSON.stringify({
         model: "grok-4.5",
         temperature: 0.2,
-        max_tokens: 1600,
+        max_tokens: 900,
         messages: [
           {
             role: "system",
@@ -98,11 +105,18 @@ ${JSON.stringify(compact)}`;
         ],
       }),
     });
-    if (!res.ok) return { enabled: false, rows: [] };
+    if (!res.ok) {
+      const value = { enabled: false, rows: [] };
+      return value;
+    }
     const body = (await res.json()) as GrokChat;
     const text = body.choices?.[0]?.message?.content ?? "";
     const parsed = extractJson(text);
-    if (!Array.isArray(parsed)) return { enabled: true, rows: [] };
+    if (!Array.isArray(parsed)) {
+      const value = { enabled: true, rows: [] };
+      aiCache.set(cacheKey, { at: Date.now(), value });
+      return value;
+    }
     const rows: SentimentRow[] = [];
     for (const item of parsed) {
       if (!item || typeof item !== "object") continue;
@@ -121,7 +135,9 @@ ${JSON.stringify(compact)}`;
         risks,
       });
     }
-    return { enabled: true, rows };
+    const value = { enabled: true, rows };
+    aiCache.set(cacheKey, { at: Date.now(), value });
+    return value;
   } catch {
     return { enabled: false, rows: [] };
   }

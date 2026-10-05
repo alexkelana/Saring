@@ -49,3 +49,13 @@ export function formatJakarta(ts: number): string {
     hourCycle: "h23",
   }).format(new Date(ts));
 }
+
+export function formatMultiple(n: number | null | undefined, digits = 1): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return `${n.toFixed(digits)}×`;
+}
+
+export function formatRoe(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  return `${n.toFixed(n >= 10 ? 0 : 1)}%`;
+}

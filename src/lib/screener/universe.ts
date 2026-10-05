@@ -1,5 +1,7 @@
 import type { Sector, Size, StockFlags, StockMeta } from "./types";
 
+export { SECTORS } from "./sectors";
+
 type FlagKey = "L" | "I" | "S" | "D" | "B";
 
 function stock(
@@ -20,7 +22,7 @@ function stock(
   return { symbol, name, sector, size, flags };
 }
 
-/** Universe likuid BEI: LQ45, IDX80, dan emiten aktif per sektor. */
+/** Overlay nama, sektor, dan flag untuk emiten yang sudah dikenal. */
 export const UNIVERSE: StockMeta[] = [
   stock("BBCA", "Bank Central Asia", "Perbankan", "mega", "LID"),
   stock("BBRI", "Bank Rakyat Indonesia", "Perbankan", "mega", "LIDB"),
@@ -73,6 +75,7 @@ export const UNIVERSE: StockMeta[] = [
   stock("ITMG", "Indo Tambangraya", "Tambang", "large", "LID"),
   stock("HRUM", "Harum Energy", "Tambang", "mid", "LD"),
   stock("BYAN", "Bayan Resources", "Tambang", "mega", "LD"),
+  stock("BREN", "Barito Renewables", "Energi", "mega", "L"),
   stock("BUMI", "Bumi Resources", "Tambang", "mid", ""),
   stock("INCO", "Vale Indonesia", "Tambang", "large", "LIS"),
   stock("ANTM", "Aneka Tambang", "Tambang", "large", "LISB"),
@@ -177,9 +180,20 @@ export const UNIVERSE: StockMeta[] = [
 
 export const UNIVERSE_BY_SYMBOL = new Map(UNIVERSE.map((s) => [s.symbol, s]));
 
-export const SECTORS: Sector[] = [
-  ...new Set(UNIVERSE.map((s) => s.sector)),
-].sort() as Sector[];
+export const MOSAIC = [
+  "BBCA",
+  "BBRI",
+  "BMRI",
+  "TLKM",
+  "ASII",
+  "AMMN",
+  "GOTO",
+  "BREN",
+  "ICBP",
+  "UNVR",
+  "ADRO",
+  "KLBF",
+];
 
 export function yahooSymbol(symbol: string): string {
   return symbol.endsWith(".JK") ? symbol : `${symbol}.JK`;

@@ -1,4 +1,4 @@
-//#region node_modules/.nitro/vite/services/ssr/assets/universe-DbDHsdq7.js
+//#region node_modules/.nitro/vite/services/ssr/assets/universe-C_BugJ9r.js
 var STRATEGIES = {
 	intraday: {
 		id: "intraday",
@@ -6,10 +6,10 @@ var STRATEGIES = {
 		horizon: "Sesi hari ini",
 		blurb: "Momentum, volume relatif, dan likuiditas untuk posisi yang ditutup sebelum penutupan bursa.",
 		looksFor: [
-			"Volume di atas rata-rata 20 hari",
+			"Nilai transaksi harian tinggi",
 			"RSI 40–70, bukan jenuh beli",
-			"Harga di atas EMA9 / SMA20",
-			"Nilai transaksi harian tinggi"
+			"Harga di atas EMA10 / SMA20",
+			"Volume di atas rata-rata 10 hari"
 		],
 		weights: {
 			technical: .62,
@@ -41,8 +41,8 @@ var STRATEGIES = {
 		blurb: "Kualitas bisnis, tren jangka panjang, dan valuasi relatif — bukan trading harian.",
 		looksFor: [
 			"Tren SMA50 / SMA200 naik",
-			"Kapitalisasi besar atau LQ45",
-			"Riwayat dividen",
+			"PE dan ROE masuk akal",
+			"Riwayat dividen atau imbal hasil",
 			"Tidak overextended dari 52-minggu"
 		],
 		weights: {
@@ -56,6 +56,67 @@ var STRATEGY_ORDER = [
 	"intraday",
 	"swing",
 	"invest"
+];
+function mapSector(tvSector, industry) {
+	const ind = (industry || "").toLowerCase();
+	const sec = (tvSector || "").toLowerCase();
+	if (/bank/.test(ind)) return "Perbankan";
+	if (/real estate|reit/.test(ind)) return "Properti";
+	if (/engineering & construction|construction materials|building products/.test(ind)) return "Konstruksi";
+	if (/wireless|telecommunication|cable\/satellite/.test(ind)) return "Telekomunikasi";
+	if (/coal|integrated oil|oil & gas|oilfield|oil refining/.test(ind)) return "Energi";
+	if (/precious metals|other metals|steel|aluminum|metal fabrication/.test(ind)) return "Tambang";
+	if (/agricultural commodities|farming/.test(ind)) return "Perkebunan";
+	if (/motor vehicle|auto parts|trucks\/construction\/farm/.test(ind)) return "Otomotif";
+	if (/hospital|pharmaceutical|biotech|medical|nursing/.test(ind)) return "Kesehatan";
+	if (/packaged software|information technology|internet software|data processing|computer communications|semiconductor|electronics\/appliances/.test(ind)) return "Teknologi";
+	if (/specialty stores|food retail|department stores|apparel\/footwear retail|electronics\/appliance stores|home improvement/.test(ind)) return "Ritel";
+	if (/wholesale distributors/.test(ind)) return "Ritel";
+	if (/marine shipping|airlines|trucking|railroads|other transportation|air freight/.test(ind)) return "Transportasi";
+	if (/electric utilities|alternative power|water utilities|gas distributors/.test(ind)) return "Infrastruktur";
+	if (/movies|broadcasting|publishing|entertainment/.test(ind)) return "Media";
+	if (/insurance|finance\/rental|investment banks|financial conglomerate|savings banks/.test(ind)) return "Keuangan";
+	if (/food:|beverages:|household\/personal|tobacco|consumer sundries/.test(ind) || /hotels\/resorts|restaurants/.test(ind)) return "Konsumer";
+	if (sec.includes("finance")) return "Keuangan";
+	if (sec.includes("energy minerals")) return "Energi";
+	if (sec.includes("non-energy minerals")) return "Tambang";
+	if (sec.includes("health")) return "Kesehatan";
+	if (sec.includes("technology") || sec.includes("electronic")) return "Teknologi";
+	if (sec.includes("communications")) return "Telekomunikasi";
+	if (sec.includes("retail") || sec.includes("distribution")) return "Ritel";
+	if (sec.includes("transport")) return "Transportasi";
+	if (sec.includes("utilities")) return "Infrastruktur";
+	if (sec.includes("consumer")) return "Konsumer";
+	return "Industri";
+}
+function sizeFromMcap(mcap) {
+	if (mcap == null || mcap <= 0) return "small";
+	if (mcap >= 0x5af3107a4000) return "mega";
+	if (mcap >= 2e13) return "large";
+	if (mcap >= 3e12) return "mid";
+	return "small";
+}
+function cleanName(raw) {
+	return raw.replace(/^PT\s+/i, "").replace(/\s+Tbk\.?$/i, "").replace(/\s+/g, " ").trim();
+}
+var SECTORS = [
+	"Perbankan",
+	"Keuangan",
+	"Telekomunikasi",
+	"Konsumer",
+	"Otomotif",
+	"Tambang",
+	"Energi",
+	"Properti",
+	"Konstruksi",
+	"Industri",
+	"Kesehatan",
+	"Teknologi",
+	"Ritel",
+	"Perkebunan",
+	"Transportasi",
+	"Infrastruktur",
+	"Media"
 ];
 function stock(symbol, name, sector, size, flagStr) {
 	const flags = {};
@@ -74,7 +135,7 @@ function stock(symbol, name, sector, size, flagStr) {
 		flags
 	};
 }
-/** Universe likuid BEI: LQ45, IDX80, dan emiten aktif per sektor. */
+/** Overlay nama, sektor, dan flag untuk emiten yang sudah dikenal. */
 var UNIVERSE = [
 	stock("BBCA", "Bank Central Asia", "Perbankan", "mega", "LID"),
 	stock("BBRI", "Bank Rakyat Indonesia", "Perbankan", "mega", "LIDB"),
@@ -97,7 +158,6 @@ var UNIVERSE = [
 	stock("TLKM", "Telkom Indonesia", "Telekomunikasi", "mega", "LIDB"),
 	stock("EXCL", "XLSmart", "Telekomunikasi", "large", "LD"),
 	stock("ISAT", "Indosat", "Telekomunikasi", "large", "LD"),
-	stock("FREN", "Smartfren", "Telekomunikasi", "mid", ""),
 	stock("TOWR", "Sarana Menara Nusantara", "Telekomunikasi", "large", "LID"),
 	stock("TBIG", "Tower Bersama", "Telekomunikasi", "large", "LD"),
 	stock("MTEL", "Dayamitra Telekomunikasi", "Telekomunikasi", "large", "LDB"),
@@ -128,6 +188,7 @@ var UNIVERSE = [
 	stock("ITMG", "Indo Tambangraya", "Tambang", "large", "LID"),
 	stock("HRUM", "Harum Energy", "Tambang", "mid", "LD"),
 	stock("BYAN", "Bayan Resources", "Tambang", "mega", "LD"),
+	stock("BREN", "Barito Renewables", "Energi", "mega", "L"),
 	stock("BUMI", "Bumi Resources", "Tambang", "mid", ""),
 	stock("INCO", "Vale Indonesia", "Tambang", "large", "LIS"),
 	stock("ANTM", "Aneka Tambang", "Tambang", "large", "LISB"),
@@ -162,7 +223,6 @@ var UNIVERSE = [
 	stock("KIJA", "Kawasan Industri Jababeka", "Properti", "mid", ""),
 	stock("PANI", "Pantai Indah Kapuk Dua", "Properti", "large", "L"),
 	stock("WIKA", "Wijaya Karya", "Konstruksi", "mid", "B"),
-	stock("WSKT", "Waskita Karya", "Konstruksi", "small", "B"),
 	stock("ADHI", "Adhi Karya", "Konstruksi", "mid", "B"),
 	stock("PTPP", "PP (Persero)", "Konstruksi", "mid", "B"),
 	stock("WTON", "Wijaya Karya Beton", "Konstruksi", "small", "B"),
@@ -230,10 +290,23 @@ var UNIVERSE = [
 	stock("FILM", "MD Pictures", "Media", "mid", ""),
 	stock("MSIN", "MNC Studios", "Media", "small", "")
 ];
-new Map(UNIVERSE.map((s) => [s.symbol, s]));
-var SECTORS = [...new Set(UNIVERSE.map((s) => s.sector))].sort();
+var UNIVERSE_BY_SYMBOL = new Map(UNIVERSE.map((s) => [s.symbol, s]));
+var MOSAIC = [
+	"BBCA",
+	"BBRI",
+	"BMRI",
+	"TLKM",
+	"ASII",
+	"AMMN",
+	"GOTO",
+	"BREN",
+	"ICBP",
+	"UNVR",
+	"ADRO",
+	"KLBF"
+];
 function yahooSymbol(symbol) {
 	return symbol.endsWith(".JK") ? symbol : `${symbol}.JK`;
 }
 //#endregion
-export { yahooSymbol as a, UNIVERSE as i, STRATEGIES as n, STRATEGY_ORDER as r, SECTORS as t };
+export { UNIVERSE_BY_SYMBOL as a, sizeFromMcap as c, STRATEGY_ORDER as i, yahooSymbol as l, SECTORS as n, cleanName as o, STRATEGIES as r, mapSector as s, MOSAIC as t };

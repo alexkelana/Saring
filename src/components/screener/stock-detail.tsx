@@ -4,8 +4,15 @@ import { Star, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { RangeBar } from "@/components/screener/range-bar";
 import { Sparkline } from "@/components/screener/sparkline";
-import { formatCompactIDR, formatPct, formatPrice } from "@/lib/screener/format";
+import {
+  formatCompactIDR,
+  formatMultiple,
+  formatPct,
+  formatPrice,
+  formatRoe,
+} from "@/lib/screener/format";
 import { STRATEGIES } from "@/lib/screener/strategies";
 import { useScreener } from "@/lib/screener/store";
 import type { StockResult } from "@/lib/screener/types";
@@ -46,6 +53,7 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
     stock.price > stock.levels.stop
       ? (stock.levels.target - stock.price) / (stock.price - stock.levels.stop)
       : 0;
+  const f = stock.fundamentals;
 
   return (
     <div className="flex h-full flex-col">
@@ -63,13 +71,13 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
           <Button
             variant="ghost"
             size="icon"
-            className="size-10"
+            className="size-11"
             aria-label={saved ? "Hapus dari watchlist" : "Simpan ke watchlist"}
             onClick={() => toggleWatch(stock.symbol)}
           >
             <Star className={cn("size-4", saved && "fill-primary text-primary")} />
           </Button>
-          <Button variant="ghost" size="icon" className="size-10" onClick={onClose} aria-label="Tutup">
+          <Button variant="ghost" size="icon" className="size-11" onClick={onClose} aria-label="Tutup">
             <X className="size-4" />
           </Button>
         </div>
@@ -84,8 +92,12 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
             {formatPct(stock.changePct)}
           </p>
         </div>
-        <Sparkline values={stock.spark} up={up} className="h-10 w-36" />
+        {stock.spark.length > 2 ? (
+          <Sparkline values={stock.spark} up={up} className="h-10 w-36" />
+        ) : null}
       </div>
+
+      <RangeBar className="mt-4" low={stock.week52Low} high={stock.week52High} value={stock.price} />
 
       <p className="mt-5 text-sm leading-relaxed text-foreground/90">{stock.thesis}</p>
 
@@ -96,7 +108,7 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
           { k: "R:R", v: rr ? `${rr.toFixed(1)}×` : "—" },
         ].map((item) => (
           <div key={item.k} className="rounded-xl bg-secondary px-3 py-2.5">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{item.k}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.k}</p>
             <p className="mt-1 font-mono text-sm tabular-nums">{item.v}</p>
           </div>
         ))}
@@ -115,10 +127,7 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
 
       <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
         <Meta label="Sektor" value={stock.sector} />
-        <Meta
-          label="RSI"
-          value={stock.indicators.rsi != null ? stock.indicators.rsi.toFixed(0) : "—"}
-        />
+        <Meta label="RSI" value={stock.indicators.rsi != null ? stock.indicators.rsi.toFixed(0) : "—"} />
         <Meta
           label="RVOL"
           value={stock.indicators.rvol != null ? `${stock.indicators.rvol.toFixed(1)}×` : "—"}
@@ -129,6 +138,12 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
         />
         <Meta label="Nilai" value={`Rp ${formatCompactIDR(stock.value)}`} />
         <Meta label="Support" value={formatPrice(stock.levels.support)} />
+        <Meta label="PE" value={formatMultiple(f.pe)} />
+        <Meta label="PB" value={formatMultiple(f.pb)} />
+        <Meta label="ROE" value={formatRoe(f.roe)} />
+        <Meta label="Dividen" value={f.divYield != null ? `${f.divYield.toFixed(1)}%` : "—"} />
+        <Meta label="Kap." value={f.mcap ? `Rp ${formatCompactIDR(f.mcap)}` : "—"} />
+        <Meta label="DER" value={formatMultiple(f.de)} />
       </div>
 
       {stock.flags.lq45 || stock.flags.dividend || stock.flags.soe || stock.flags.shariah ? (
@@ -143,7 +158,7 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
 
       {stock.reasons.length ? (
         <div className="mt-5">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Alasan</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Alasan</p>
           <ul className="mt-2 space-y-1.5 text-sm text-foreground/90">
             {stock.reasons.map((r) => (
               <li key={r} className="flex gap-2">
@@ -157,7 +172,7 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
 
       {stock.risks.length ? (
         <div className="mt-4">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Risiko</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Risiko</p>
           <ul className="mt-2 space-y-1.5 text-sm text-foreground/90">
             {stock.risks.map((r) => (
               <li key={r} className="flex gap-2">
@@ -171,7 +186,7 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
 
       {stock.headlines.length ? (
         <div className="mt-5">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Berita</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Berita</p>
           <ul className="mt-2 space-y-2">
             {stock.headlines.slice(0, 3).map((h) => (
               <li key={h.title} className="text-sm leading-snug">
@@ -190,7 +205,7 @@ function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-2">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono text-[13px] tabular-nums">{value}</span>
+      <span className="font-mono text-xs tabular-nums">{value}</span>
     </div>
   );
 }
