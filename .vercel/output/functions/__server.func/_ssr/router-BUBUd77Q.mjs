@@ -1,13 +1,13 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
-import { _ as lazyRouteComponent, b as useRouter, f as Scripts, g as Outlet, h as createRouter, p as HeadContent, v as createFileRoute, y as createRootRoute } from "../_libs/@tanstack/react-router+[...].mjs";
-import { i as require_jsx_runtime, r as QueryClientProvider } from "../_libs/react+tanstack__react-query.mjs";
-import { n as TSS_SERVER_FUNCTION, r as getServerFnById, t as createServerFn } from "./ssr.mjs";
-import { a as string, i as object, n as literal, o as union, r as number, t as _enum } from "../_libs/zod.mjs";
-import { n as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { S as useRouter, _ as Outlet, b as createRootRoute, f as Scripts, g as createRouter, p as HeadContent, v as lazyRouteComponent, y as createFileRoute } from "../_libs/@tanstack/react-router+[...].mjs";
+import { i as require_jsx_runtime, n as useQuery, r as QueryClientProvider } from "../_libs/react+tanstack__react-query.mjs";
+import { a as object, i as number, o as string, r as literal, s as union } from "../_libs/zod.mjs";
+import { c as formatPrice, d as getQuotes, h as useDesk, s as formatPct, u as getMarketOverview } from "./format-CtGhOwOb.mjs";
+import { r as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
-import { t as Toaster } from "../_libs/sonner.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-NXSBmfGB.js
+import { n as toast, t as Toaster } from "../_libs/sonner.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/router-BUBUd77Q.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var __defProp = Object.defineProperty;
@@ -49,6 +49,109 @@ function AppErrorComponent({ error }) {
 		]
 	});
 }
+var COOLDOWN = 216e5;
+function ping(title, body) {
+	toast.message(title, { description: body });
+	if (typeof Notification !== "undefined" && Notification.permission === "granted") try {
+		new Notification(title, {
+			body,
+			icon: "/favicon.svg"
+		});
+	} catch {}
+}
+function AlertWatcher() {
+	const alerts = useDesk((s) => s.alerts);
+	const positions = useDesk((s) => s.positions);
+	const pushNotice = useDesk((s) => s.pushNotice);
+	const markFired = useDesk((s) => s.markFired);
+	const markRisk = useDesk((s) => s.markRisk);
+	const seen = (0, import_react.useRef)("");
+	const symbols = (0, import_react.useMemo)(() => {
+		const set = /* @__PURE__ */ new Set();
+		for (const a of alerts) if (a.enabled) set.add(a.symbol);
+		for (const p of positions) set.add(p.symbol);
+		return [...set];
+	}, [alerts, positions]);
+	const query = useQuery({
+		queryKey: ["quotes", symbols.join(",")],
+		queryFn: () => getQuotes({ data: { symbols } }),
+		enabled: symbols.length > 0,
+		refetchInterval: 9e4
+	});
+	(0, import_react.useEffect)(() => {
+		const rows = query.data;
+		if (!rows?.length) return;
+		const stamp = `${query.dataUpdatedAt}:${rows.map((r) => r.symbol + r.price).join("|")}`;
+		if (stamp === seen.current) return;
+		seen.current = stamp;
+		const now = Date.now();
+		const bySym = new Map(rows.map((r) => [r.symbol, r]));
+		const desk = useDesk.getState();
+		for (const alert of desk.alerts) {
+			if (!alert.enabled) continue;
+			if (alert.lastFiredAt && now - alert.lastFiredAt < COOLDOWN) continue;
+			const q = bySym.get(alert.symbol);
+			if (!q) continue;
+			let hit = false;
+			let body = "";
+			if (alert.kind === "above" && q.price >= alert.value) {
+				hit = true;
+				body = `${alert.symbol} ${formatPrice(q.price)} menembus ${formatPrice(alert.value)}.`;
+			} else if (alert.kind === "below" && q.price <= alert.value) {
+				hit = true;
+				body = `${alert.symbol} ${formatPrice(q.price)} turun ke ${formatPrice(alert.value)}.`;
+			} else if (alert.kind === "change" && Math.abs(q.changePct) >= alert.value) {
+				hit = true;
+				body = `${alert.symbol} bergerak ${formatPct(q.changePct)} hari ini.`;
+			}
+			if (!hit) continue;
+			const title = `Alert ${alert.symbol}`;
+			desk.pushNotice({
+				title,
+				body,
+				symbol: alert.symbol,
+				kind: "alert"
+			});
+			desk.markFired(alert.id);
+			ping(title, body);
+		}
+		for (const pos of desk.positions) {
+			if (pos.lastRiskAt && now - pos.lastRiskAt < COOLDOWN) continue;
+			const q = bySym.get(pos.symbol);
+			if (!q) continue;
+			if (pos.stop != null && q.price <= pos.stop) {
+				const title = `Stop ${pos.symbol}`;
+				const body = `Harga ${formatPrice(q.price)} menyentuh stop ${formatPrice(pos.stop)}.`;
+				desk.pushNotice({
+					title,
+					body,
+					symbol: pos.symbol,
+					kind: "portfolio"
+				});
+				desk.markRisk(pos.id);
+				ping(title, body);
+			} else if (pos.target != null && q.price >= pos.target) {
+				const title = `Target ${pos.symbol}`;
+				const body = `Harga ${formatPrice(q.price)} mencapai target ${formatPrice(pos.target)}.`;
+				desk.pushNotice({
+					title,
+					body,
+					symbol: pos.symbol,
+					kind: "portfolio"
+				});
+				desk.markRisk(pos.id);
+				ping(title, body);
+			}
+		}
+	}, [
+		query.data,
+		query.dataUpdatedAt,
+		pushNotice,
+		markFired,
+		markRisk
+	]);
+	return null;
+}
 function AppProviders({ children }) {
 	const [client] = (0, import_react.useState)(() => new QueryClient({ defaultOptions: {
 		queries: {
@@ -60,11 +163,15 @@ function AppProviders({ children }) {
 	} }));
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(QueryClientProvider, {
 		client,
-		children: [children, /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toaster, {
-			theme: "dark",
-			position: "bottom-center",
-			toastOptions: { className: "!bg-card !text-foreground !border-border !shadow-[var(--shadow-border)] !font-sans" }
-		})]
+		children: [
+			children,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AlertWatcher, {}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toaster, {
+				theme: "dark",
+				position: "bottom-center",
+				toastOptions: { className: "!bg-card !text-foreground !border-border !shadow-[var(--shadow-border)] !font-sans" }
+			})
+		]
 	});
 }
 var CONNECTOR_TOKEN_READY_EVENT = "grok:connector-token-ready";
@@ -329,9 +436,9 @@ function PreviewHostBridge() {
 function AuthProvider({ children }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children });
 }
-var styles_default = "/assets/styles--67pidQZ.css";
+var styles_default = "/assets/styles-BXyv2Wqz.css";
 var APP_NAME = "Saring";
-var Route$1 = createRootRoute({
+var Route$3 = createRootRoute({
 	head: () => ({
 		meta: [
 			{ charSet: "utf-8" },
@@ -383,39 +490,33 @@ var Route$1 = createRootRoute({
 		})]
 	})
 });
-var createSsrRpc = (functionId) => {
-	const url = "/_serverFn/" + functionId;
-	const serverFnMeta = { id: functionId };
-	const fn = async (...args) => {
-		return (await getServerFnById(functionId, { origin: "server" }))(...args);
-	};
-	return Object.assign(fn, {
-		url,
-		serverFnMeta,
-		[TSS_SERVER_FUNCTION]: true
-	});
-};
-var strategySchema = _enum([
-	"intraday",
-	"swing",
-	"invest"
-]);
-var getMarketOverview = createServerFn({ method: "GET" }).handler(createSsrRpc("188d632fbf615078a692c25743dd576addb6c625e679120cf0a02b872af73ecd"));
-var runScreen = createServerFn({ method: "POST" }).validator((input) => object({
-	strategy: strategySchema,
-	sector: string().optional()
-}).parse(input)).handler(createSsrRpc("6eaf54abdfd734364375eee1d24f9c131579fc8e6952e40428d59ffcf07f3b9f"));
-var $$splitComponentImporter = () => import("./routes-C7YNKZXk.mjs");
-var Route = createFileRoute("/")({
+var $$splitComponentImporter$2 = () => import("./routes-DjN6KB0-.mjs");
+var Route$2 = createFileRoute("/")({
 	loader: () => getMarketOverview(),
-	component: lazyRouteComponent($$splitComponentImporter, "component")
+	component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-var rootRouteChildren = { IndexRoute: Route.update({
-	id: "/",
-	path: "/",
-	getParentRoute: () => Route$1
-}) };
-var routeTree = Route$1._addFileChildren(rootRouteChildren)._addFileTypes();
+var $$splitComponentImporter$1 = () => import("./backtest-Boh5SXW1.mjs");
+var Route$1 = createFileRoute("/backtest")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
+var $$splitComponentImporter = () => import("./portfolio-BlSBuQGH.mjs");
+var Route = createFileRoute("/portfolio")({ component: lazyRouteComponent($$splitComponentImporter, "component") });
+var rootRouteChildren = {
+	IndexRoute: Route$2.update({
+		id: "/",
+		path: "/",
+		getParentRoute: () => Route$3
+	}),
+	BacktestRoute: Route$1.update({
+		id: "/backtest",
+		path: "/backtest",
+		getParentRoute: () => Route$3
+	}),
+	PortfolioRoute: Route.update({
+		id: "/portfolio",
+		path: "/portfolio",
+		getParentRoute: () => Route$3
+	})
+};
+var routeTree = Route$3._addFileChildren(rootRouteChildren)._addFileTypes();
 var router_exports = /* @__PURE__ */ __exportAll({ getRouter: () => getRouter });
 function getRouter() {
 	return createRouter({
@@ -425,4 +526,4 @@ function getRouter() {
 	});
 }
 //#endregion
-export { runScreen as i, Route as n, getMarketOverview as r, router_exports as t };
+export { Route$2 as n, router_exports as t };

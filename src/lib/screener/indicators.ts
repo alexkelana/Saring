@@ -164,3 +164,77 @@ export function round(n: number, digits = 0): number {
   const p = 10 ** digits;
   return Math.round(n * p) / p;
 }
+
+export function smaSeries(values: number[], period: number): (number | null)[] {
+  const out: (number | null)[] = Array(values.length).fill(null);
+  if (values.length < period) return out;
+  let sum = 0;
+  for (let i = 0; i < values.length; i++) {
+    sum += values[i]!;
+    if (i >= period) sum -= values[i - period]!;
+    if (i >= period - 1) out[i] = sum / period;
+  }
+  return out;
+}
+
+export function rsiSeries(values: number[], period = 14): (number | null)[] {
+  const out: (number | null)[] = Array(values.length).fill(null);
+  if (values.length < period + 1) return out;
+  let avgG = 0;
+  let avgL = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = values[i]! - values[i - 1]!;
+    if (d >= 0) avgG += d;
+    else avgL -= d;
+  }
+  avgG /= period;
+  avgL /= period;
+  out[period] = avgL === 0 ? 100 : 100 - 100 / (1 + avgG / avgL);
+  for (let i = period + 1; i < values.length; i++) {
+    const d = values[i]! - values[i - 1]!;
+    avgG = (avgG * (period - 1) + (d > 0 ? d : 0)) / period;
+    avgL = (avgL * (period - 1) + (d < 0 ? -d : 0)) / period;
+    out[i] = avgL === 0 ? 100 : 100 - 100 / (1 + avgG / avgL);
+  }
+  return out;
+}
+
+export function atrSeries(bars: Ohlcv[], period = 14): (number | null)[] {
+  const out: (number | null)[] = Array(bars.length).fill(null);
+  if (bars.length < period + 1) return out;
+  const trs: number[] = [0];
+  for (let i = 1; i < bars.length; i++) {
+    const b = bars[i]!;
+    const prev = bars[i - 1]!;
+    trs.push(Math.max(b.h - b.l, Math.abs(b.h - prev.c), Math.abs(b.l - prev.c)));
+  }
+  let acc = 0;
+  for (let i = 1; i <= period; i++) acc += trs[i]!;
+  acc /= period;
+  out[period] = acc;
+  for (let i = period + 1; i < bars.length; i++) {
+    acc = (acc * (period - 1) + trs[i]!) / period;
+    out[i] = acc;
+  }
+  return out;
+}
+
+export function macdHistSeries(values: number[]): (number | null)[] {
+  const out: (number | null)[] = Array(values.length).fill(null);
+  const e12 = emaSeries(values, 12);
+  const e26 = emaSeries(values, 26);
+  if (!e12 || !e26) return out;
+  const line: number[] = [];
+  const idxs: number[] = [];
+  for (let i = 25; i < values.length; i++) {
+    line.push(e12[i]! - e26[i]!);
+    idxs.push(i);
+  }
+  const sig = emaSeries(line, 9);
+  if (!sig) return out;
+  for (let j = 8; j < line.length; j++) {
+    out[idxs[j]!] = line[j]! - sig[j]!;
+  }
+  return out;
+}
+

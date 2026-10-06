@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Loader2, Search, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AppShell } from "@/components/screener/app-shell";
 import { RangeBar } from "@/components/screener/range-bar";
 import { ScoreRing } from "@/components/screener/score-ring";
 import { Sparkline } from "@/components/screener/sparkline";
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getMarketOverview, runScreen } from "@/lib/screener/actions";
+import { useDesk } from "@/lib/screener/desk-store";
 import { formatJakarta, formatPct, formatPrice } from "@/lib/screener/format";
 import { STRATEGIES, STRATEGY_ORDER } from "@/lib/screener/strategies";
 import { useScreener, type SortKey, type VerdictFilter } from "@/lib/screener/store";
@@ -81,6 +83,29 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
       toast.message(`Selesai memindai ${data.scanned} emiten`, {
         description: `${data.results.length} saham masuk radar ${STRATEGIES[strategy].label.toLowerCase()}.`,
       });
+      const desk = useDesk.getState();
+      if (!desk.screenPing) return;
+      const beli = data.results.filter((r) => r.verdict === "beli");
+      const saved = useScreener.getState().watchlist;
+      const hits = beli.filter((r) => saved.includes(r.symbol));
+      if (hits.length) {
+        const body = hits.map((r) => r.symbol).join(", ");
+        desk.pushNotice({
+          title: `${hits.length} watchlist masuk beli`,
+          body,
+          kind: "screen",
+          symbol: hits[0]?.symbol,
+        });
+      } else if (beli.length) {
+        desk.pushNotice({
+          title: `${beli.length} saham radar beli`,
+          body: `${STRATEGIES[strategy].label}: ${beli
+            .slice(0, 5)
+            .map((r) => r.symbol)
+            .join(", ")}`,
+          kind: "screen",
+        });
+      }
     },
     onError: () => {
       setError("Screening gagal. Coba beberapa saat lagi.");
@@ -116,24 +141,7 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
   }, [result, query, watchOnly, watchlist, sort, verdictFilter]);
 
   return (
-    <div className="relative mx-auto min-h-dvh w-full max-w-[1320px] px-4 pb-16 pt-5 sm:px-6 lg:px-8">
-      <header className="saring-enter flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-            Screener saham BEI
-          </p>
-          <h1 className="mt-1 font-display text-4xl italic leading-none tracking-tight sm:text-5xl">
-            saring
-          </h1>
-        </div>
-        <MarketChip
-          price={market?.price}
-          changePct={market?.changePct}
-          statusLabel={market?.statusLabel}
-          asOf={market?.asOf}
-        />
-      </header>
-
+    <AppShell market={market}>
       <section className="saring-enter-2 mt-8 grid gap-3 md:grid-cols-3">
         {STRATEGY_ORDER.map((id) => {
           const item = STRATEGIES[id];
@@ -393,36 +401,7 @@ export function HomeView({ initialMarket }: { initialMarket?: MarketSnapshot }) 
         hasil. Selalu verifikasi ke sumber resmi dan sesuaikan dengan profil risiko Anda.
         {result && !result.sentimentEnabled ? " Analisis sentimen AI tidak aktif pada sesi ini — skor berita memakai headline." : ""}
       </footer>
-    </div>
-  );
-}
-
-function MarketChip({
-  price,
-  changePct,
-  statusLabel,
-  asOf,
-}: {
-  price?: number;
-  changePct?: number;
-  statusLabel?: string;
-  asOf?: number;
-}) {
-  const up = (changePct ?? 0) >= 0;
-  return (
-    <div className="rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]">
-      <div className="flex items-baseline gap-2">
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">IHSG</span>
-        <span className="font-mono text-lg tabular-nums">{price ? formatPrice(price) : "—"}</span>
-        <span className={cn("font-mono text-sm tabular-nums", up ? "text-up" : "text-down")}>
-          {changePct != null ? formatPct(changePct) : ""}
-        </span>
-      </div>
-      <p className="mt-0.5 text-xs text-muted-foreground">
-        {statusLabel ?? "Memuat"}
-        {asOf ? ` · ${formatJakarta(asOf)}` : ""}
-      </p>
-    </div>
+    </AppShell>
   );
 }
 

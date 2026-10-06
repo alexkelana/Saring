@@ -59,3 +59,29 @@ export function formatRoe(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return "—";
   return `${n.toFixed(n >= 10 ? 0 : 1)}%`;
 }
+
+export const LOT = 100;
+
+export function formatDateId(ts: number): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(ts));
+}
+
+export function formatDateShort(ts: number): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(ts));
+}
+
+export function formatLots(shares: number): string {
+  const lots = shares / LOT;
+  const lotLabel = Number.isInteger(lots) ? String(lots) : lots.toFixed(2).replace(/\.?0+$/, "");
+  return `${lotLabel} lot`;
+}
+

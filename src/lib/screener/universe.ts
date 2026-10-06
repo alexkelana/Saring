@@ -196,9 +196,24 @@ export const MOSAIC = [
 ];
 
 export function yahooSymbol(symbol: string): string {
-  return symbol.endsWith(".JK") ? symbol : `${symbol}.JK`;
+  const s = symbol.trim().toUpperCase();
+  if (s === "^JKSE" || s === "COMPOSITE" || s === "IHSG") return "^JKSE";
+  return s.endsWith(".JK") ? s : `${s}.JK`;
 }
 
 export function bareSymbol(symbol: string): string {
-  return symbol.replace(/\.JK$/i, "").toUpperCase();
+  return symbol.replace(/^\^/, "").replace(/\.JK$/i, "").toUpperCase();
 }
+
+export function pickBacktestSymbols(sector = "Semua", limit = 24): string[] {
+  const rows = UNIVERSE.filter((s) => sector === "Semua" || s.sector === sector);
+  const rank = (s: StockMeta) =>
+    (s.flags.idx30 ? 4 : 0) +
+    (s.flags.lq45 ? 3 : 0) +
+    (s.size === "mega" ? 3 : s.size === "large" ? 2 : s.size === "mid" ? 1 : 0);
+  return [...rows]
+    .sort((a, b) => rank(b) - rank(a) || a.symbol.localeCompare(b.symbol))
+    .slice(0, limit)
+    .map((s) => s.symbol);
+}
+

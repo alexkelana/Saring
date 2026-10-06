@@ -89,7 +89,7 @@ export async function fetchChart(symbol: string, range = "6mo"): Promise<ChartBu
   if (hit !== null) return hit;
 
   const url = `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(y)}?range=${range}&interval=1d&events=div`;
-  const data = await fetchJson<YahooChart>(url, 4000);
+  const data = await fetchJson<YahooChart>(url, 6000);
   const result = data?.chart?.result?.[0];
   if (!result?.timestamp?.length || !result.indicators?.quote?.[0]) {
     chartCache.set(key, { at: Date.now(), value: null });
@@ -144,9 +144,13 @@ export async function fetchChart(symbol: string, range = "6mo"): Promise<ChartBu
   return bundle;
 }
 
-export async function fetchCharts(symbols: string[]): Promise<ChartBundle[]> {
+export async function fetchCharts(
+  symbols: string[],
+  range = "6mo",
+  max = 12,
+): Promise<ChartBundle[]> {
   try {
-    const rows = await mapPool(symbols.slice(0, 12), 5, async (symbol) => fetchChart(symbol));
+    const rows = await mapPool(symbols.slice(0, max), 6, async (symbol) => fetchChart(symbol, range));
     return rows.filter((r): r is ChartBundle => r !== null);
   } catch {
     return [];

@@ -1,61 +1,19 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { i as require_jsx_runtime, n as useQuery, t as useMutation } from "../_libs/react+tanstack__react-query.mjs";
-import { i as STRATEGY_ORDER, n as SECTORS, r as STRATEGIES, t as MOSAIC } from "./universe-C_BugJ9r.mjs";
-import { a as LoaderCircle, i as Search, o as ArrowUpRight, r as Star, t as X } from "../_libs/lucide-react.mjs";
-import { n as toast } from "../_libs/sonner.mjs";
-import { i as runScreen, n as Route, r as getMarketOverview } from "./router-NXSBmfGB.mjs";
-import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
-import { t as twMerge } from "../_libs/tailwind-merge.mjs";
-import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
+import { n as STRATEGIES, r as STRATEGY_ORDER, t as SECTORS } from "./strategies-BJmMjwBP.mjs";
+import { t as MOSAIC } from "./universe-CuRQ4irm.mjs";
 import { n as create, t as persist } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-C7YNKZXk.js
+import { a as formatLots, c as formatPrice, h as useDesk, i as formatJakarta, l as formatRoe, m as runScreen, o as formatMultiple, r as formatIDR, s as formatPct, t as formatCompactIDR, u as getMarketOverview } from "./format-CtGhOwOb.mjs";
+import { a as Search, c as Bell, i as Star, l as ArrowUpRight, n as Wallet, s as LoaderCircle, t as X } from "../_libs/lucide-react.mjs";
+import { n as toast } from "../_libs/sonner.mjs";
+import { n as Button, r as cn, t as AppShell } from "./app-shell-CQ7g93Be.mjs";
+import { t as Badge } from "./badge-Bov-DEDP.mjs";
+import { t as Input } from "./input-BszirhD1.mjs";
+import { n as Route$2 } from "./router-BUBUd77Q.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-DjN6KB0-.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-function formatPrice(n) {
-	if (!Number.isFinite(n)) return "—";
-	const digits = n >= 1e3 ? 0 : n >= 100 ? 1 : 2;
-	return new Intl.NumberFormat("id-ID", {
-		maximumFractionDigits: digits,
-		minimumFractionDigits: 0
-	}).format(n);
-}
-function formatCompactIDR(n) {
-	if (!Number.isFinite(n) || n === 0) return "0";
-	const abs = Math.abs(n);
-	const sign = n < 0 ? "−" : "";
-	if (abs >= 0xe8d4a51000) return `${sign}${(abs / 0xe8d4a51000).toFixed(abs >= 0x9184e72a000 ? 1 : 2).replace(/\.0+$/, "")} T`;
-	if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(abs >= 1e10 ? 1 : 2).replace(/\.0+$/, "")} M`;
-	if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(1).replace(/\.0+$/, "")} jt`;
-	if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(1).replace(/\.0+$/, "")} rb`;
-	return `${sign}${Math.round(abs)}`;
-}
-function formatPct(n, digits = 2) {
-	if (!Number.isFinite(n)) return "—";
-	return `${n > 0 ? "+" : ""}${n.toFixed(digits)}%`;
-}
-function formatJakarta(ts) {
-	return new Intl.DateTimeFormat("id-ID", {
-		timeZone: "Asia/Jakarta",
-		weekday: "short",
-		day: "numeric",
-		month: "short",
-		hour: "2-digit",
-		minute: "2-digit",
-		hourCycle: "h23"
-	}).format(new Date(ts));
-}
-function formatMultiple(n, digits = 1) {
-	if (n == null || !Number.isFinite(n)) return "—";
-	return `${n.toFixed(digits)}×`;
-}
-function formatRoe(n) {
-	if (n == null || !Number.isFinite(n)) return "—";
-	return `${n.toFixed(n >= 10 ? 0 : 1)}%`;
-}
-function cn(...inputs) {
-	return twMerge(clsx(inputs));
-}
 function RangeBar({ low, high, value, className }) {
 	if (low == null || high == null || high <= low) return null;
 	const pct = Math.min(100, Math.max(0, (value - low) / (high - low) * 100));
@@ -148,53 +106,6 @@ function Sparkline({ values, className, up }) {
 			strokeLinecap: "round",
 			points: pts
 		})
-	});
-}
-var badgeVariants = cva("inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide uppercase", {
-	variants: { variant: {
-		default: "bg-secondary text-muted-foreground",
-		beli: "bg-up/15 text-up",
-		pertimbangkan: "bg-warn/15 text-warn",
-		tunggu: "bg-secondary text-muted-foreground",
-		up: "bg-up/15 text-up",
-		down: "bg-down/15 text-down"
-	} },
-	defaultVariants: { variant: "default" }
-});
-function Badge({ className, variant, ...props }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-		className: cn(badgeVariants({ variant }), className),
-		...props
-	});
-}
-var buttonVariants = cva("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-[background-color,color,box-shadow,transform,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 disabled:pointer-events-none disabled:opacity-40 active:not-disabled:scale-[0.96] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0", {
-	variants: {
-		variant: {
-			default: "bg-primary text-primary-foreground hover:bg-primary/90",
-			outline: "bg-transparent text-foreground shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-border-hover)] hover:bg-accent",
-			ghost: "bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
-			subtle: "bg-secondary text-secondary-foreground hover:bg-accent"
-		},
-		size: {
-			default: "h-11 px-5",
-			sm: "h-9 px-3.5 text-[13px]",
-			lg: "h-12 px-6",
-			icon: "size-11"
-		}
-	},
-	defaultVariants: {
-		variant: "default",
-		size: "default"
-	}
-});
-function Button({ className, variant, size, asChild = false, ...props }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(asChild ? Slot : "button", {
-		className: cn(buttonVariants({
-			variant,
-			size,
-			className
-		})),
-		...props
 	});
 }
 function Separator({ className }) {
@@ -483,8 +394,97 @@ function StockDetail({ stock, onClose }) {
 						})]
 					}, h.title))
 				})]
-			}) : null
+			}) : null,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DeskActions, {
+				stock,
+				strategy
+			})
 		]
+	});
+}
+function DeskActions({ stock, strategy }) {
+	const addAlert = useDesk((s) => s.addAlert);
+	const addPosition = useDesk((s) => s.addPosition);
+	const [lots, setLots] = (0, import_react.useState)("1");
+	const [openBuy, setOpenBuy] = (0, import_react.useState)(false);
+	const alertAt = (kind, value, label) => {
+		addAlert({
+			symbol: stock.symbol,
+			name: stock.name,
+			kind,
+			value
+		});
+		toast.message(`Alert ${stock.symbol}`, { description: `${label} ${formatPrice(value)}` });
+	};
+	const buy = () => {
+		const n = Number(lots);
+		if (!Number.isFinite(n) || n <= 0) {
+			toast.message("Lot tidak valid.");
+			return;
+		}
+		addPosition({
+			symbol: stock.symbol,
+			name: stock.name,
+			sector: stock.sector,
+			shares: n * 100,
+			avgPrice: stock.price,
+			strategy,
+			stop: stock.levels.stop,
+			target: stock.levels.target
+		});
+		setOpenBuy(false);
+		toast.message(`${stock.symbol} masuk portofolio`, { description: `${formatLots(n * 100)} @ ${formatPrice(stock.price)} · ${formatIDR(n * 100 * stock.price)}` });
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mt-6 space-y-3",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "grid grid-cols-2 gap-2",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+				variant: "subtle",
+				size: "sm",
+				className: "h-11",
+				onClick: () => alertAt("above", stock.levels.target, "di atas target"),
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Bell, { className: "size-4" }), "Alert target"]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+				variant: "subtle",
+				size: "sm",
+				className: "h-11",
+				onClick: () => alertAt("below", stock.levels.stop, "di bawah stop"),
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Bell, { className: "size-4" }), "Alert stop"]
+			})]
+		}), openBuy ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "rounded-2xl bg-secondary p-3",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+					className: "text-xs uppercase tracking-wide text-muted-foreground",
+					htmlFor: "lot-buy",
+					children: "Lot (100 lembar)"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-2 flex gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+						id: "lot-buy",
+						type: "number",
+						min: .01,
+						value: lots,
+						onChange: (e) => setLots(e.target.value),
+						className: "h-11"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						className: "h-11",
+						onClick: buy,
+						children: "Beli"
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-2 text-xs text-muted-foreground",
+					children: ["Estimasi ", formatIDR((Number(lots) || 0) * 100 * stock.price)]
+				})
+			]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+			className: "h-11 w-full",
+			onClick: () => setOpenBuy(true),
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Wallet, { className: "size-4" }), "Masuk portofolio"]
+		})]
 	});
 }
 function Meta({ label, value }) {
@@ -497,12 +497,6 @@ function Meta({ label, value }) {
 			className: "font-mono text-xs tabular-nums",
 			children: value
 		})]
-	});
-}
-function Input({ className, ...props }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-		className: cn("flex h-11 w-full rounded-full bg-secondary px-4 text-sm text-foreground shadow-[var(--shadow-border)] placeholder:text-muted-foreground/80", "transition-[box-shadow] duration-150 ease-out", "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70", className),
-		...props
 	});
 }
 var STEPS = [
@@ -583,6 +577,24 @@ function HomeView({ initialMarket }) {
 		onSuccess: (data) => {
 			setResult(data);
 			toast.message(`Selesai memindai ${data.scanned} emiten`, { description: `${data.results.length} saham masuk radar ${STRATEGIES[strategy].label.toLowerCase()}.` });
+			const desk = useDesk.getState();
+			if (!desk.screenPing) return;
+			const beli = data.results.filter((r) => r.verdict === "beli");
+			const saved = useScreener.getState().watchlist;
+			const hits = beli.filter((r) => saved.includes(r.symbol));
+			if (hits.length) {
+				const body = hits.map((r) => r.symbol).join(", ");
+				desk.pushNotice({
+					title: `${hits.length} watchlist masuk beli`,
+					body,
+					kind: "screen",
+					symbol: hits[0]?.symbol
+				});
+			} else if (beli.length) desk.pushNotice({
+				title: `${beli.length} saham radar beli`,
+				body: `${STRATEGIES[strategy].label}: ${beli.slice(0, 5).map((r) => r.symbol).join(", ")}`,
+				kind: "screen"
+			});
 		},
 		onError: () => {
 			setError("Screening gagal. Coba beberapa saat lagi.");
@@ -620,24 +632,9 @@ function HomeView({ initialMarket }) {
 		sort,
 		verdictFilter
 	]);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "relative mx-auto min-h-dvh w-full max-w-[1320px] px-4 pb-16 pt-5 sm:px-6 lg:px-8",
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AppShell, {
+		market,
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-				className: "saring-enter flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground",
-					children: "Screener saham BEI"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "mt-1 font-display text-4xl italic leading-none tracking-tight sm:text-5xl",
-					children: "saring"
-				})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarketChip, {
-					price: market?.price,
-					changePct: market?.changePct,
-					statusLabel: market?.statusLabel,
-					asOf: market?.asOf
-				})]
-			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
 				className: "saring-enter-2 mt-8 grid gap-3 md:grid-cols-3",
 				children: STRATEGY_ORDER.map((id) => {
@@ -885,32 +882,6 @@ function HomeView({ initialMarket }) {
 		]
 	});
 }
-function MarketChip({ price, changePct, statusLabel, asOf }) {
-	const up = (changePct ?? 0) >= 0;
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-border)]",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "flex items-baseline gap-2",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "text-xs uppercase tracking-wide text-muted-foreground",
-					children: "IHSG"
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "font-mono text-lg tabular-nums",
-					children: price ? formatPrice(price) : "—"
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: cn("font-mono text-sm tabular-nums", up ? "text-up" : "text-down"),
-					children: changePct != null ? formatPct(changePct) : ""
-				})
-			]
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-			className: "mt-0.5 text-xs text-muted-foreground",
-			children: [statusLabel ?? "Memuat", asOf ? ` · ${formatJakarta(asOf)}` : ""]
-		})]
-	});
-}
 function LoadingPanel({ step, strategy }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "mt-10 rounded-3xl bg-card px-5 py-8 shadow-[var(--shadow-border)] sm:px-8",
@@ -981,7 +952,7 @@ function EmptyState({ strategy, onRun }) {
 	});
 }
 function Home() {
-	const market = Route.useLoaderData();
+	const market = Route$2.useLoaderData();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HomeView, { initialMarket: market });
 }
 //#endregion

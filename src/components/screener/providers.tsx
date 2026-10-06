@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { AlertWatcher } from "@/components/screener/alert-watcher";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [client] = useState(
@@ -17,6 +18,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       {children}
+      <AlertWatcher />
       <Toaster
         theme="dark"
         position="bottom-center"

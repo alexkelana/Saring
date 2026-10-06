@@ -162,3 +162,73 @@ export type ScreenResult = {
   sentimentEnabled: boolean;
   note?: string;
 };
+
+export type Quote = {
+  symbol: string;
+  name: string;
+  sector: Sector;
+  price: number;
+  changePct: number;
+  prevClose: number;
+  volume: number;
+  value: number;
+};
+
+export type Lookback = "6mo" | "1y" | "2y";
+
+export type BacktestTrade = {
+  symbol: string;
+  name: string;
+  entryDate: number;
+  exitDate: number;
+  entry: number;
+  exit: number;
+  retPct: number;
+  reason: string;
+  exitReason: "target" | "stop" | "time" | "signal";
+  holdDays: number;
+};
+
+export type EquityPoint = {
+  t: number;
+  v: number;
+};
+
+export type BacktestSymbolRow = {
+  symbol: string;
+  name: string;
+  trades: number;
+  winRate: number;
+  retPct: number;
+};
+
+export type BacktestMetrics = {
+  totalReturn: number;
+  winRate: number;
+  trades: number;
+  wins: number;
+  losses: number;
+  avgWin: number;
+  avgLoss: number;
+  profitFactor: number;
+  maxDrawdown: number;
+  avgHoldDays: number;
+  vsBuyHold: number | null;
+  finalEquity: number;
+  startEquity: number;
+};
+
+export type BacktestResult = {
+  strategy: StrategyId;
+  sector: string;
+  lookback: Lookback;
+  asOf: number;
+  scanned: number;
+  used: number;
+  trades: BacktestTrade[];
+  equity: EquityPoint[];
+  metrics: BacktestMetrics;
+  bySymbol: BacktestSymbolRow[];
+  note?: string;
+};
+

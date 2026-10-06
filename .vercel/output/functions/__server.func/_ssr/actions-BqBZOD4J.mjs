@@ -1,7 +1,8 @@
 import { n as TSS_SERVER_FUNCTION, t as createServerFn } from "./ssr.mjs";
-import { a as UNIVERSE_BY_SYMBOL, c as sizeFromMcap, l as yahooSymbol, o as cleanName, r as STRATEGIES, s as mapSector } from "./universe-C_BugJ9r.mjs";
-import { a as string, i as object, t as _enum } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/actions-BZE5_-NW.js
+import { a as mapSector, i as cleanName, n as STRATEGIES, o as sizeFromMcap } from "./strategies-BJmMjwBP.mjs";
+import { a as pickBacktestSymbols, i as bareSymbol, o as yahooSymbol, r as UNIVERSE_BY_SYMBOL } from "./universe-CuRQ4irm.mjs";
+import { a as object, n as array, o as string, t as _enum } from "../_libs/zod.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/actions-BqBZOD4J.js
 var createServerRpc = (serverFnMeta, splitImportFn) => {
 	const url = "/_serverFn/" + serverFnMeta.id;
 	return Object.assign(splitImportFn, {
@@ -10,88 +11,20 @@ var createServerRpc = (serverFnMeta, splitImportFn) => {
 		[TSS_SERVER_FUNCTION]: true
 	});
 };
-var POSITIVE = [
-	"laba",
-	"untung",
-	"dividen",
-	"ekspansi",
-	"kontrak",
-	"kerja sama",
-	"kerjasama",
-	"menguat",
-	"meroket",
-	"rekor",
-	"buyback",
-	"upgrade",
-	"rekomendasi beli",
-	"pertumbuhan",
-	"positif",
-	"di atas ekspektasi",
-	"kalahkan",
-	"capex",
-	"oversubscribe",
-	"breakout",
-	"sentimen positif",
-	"naik signifikan",
-	"raih"
-];
-var NEGATIVE = [
-	"rugi",
-	"merugi",
-	"gagal bayar",
-	"default",
-	"suspensi",
-	"suspend",
-	"fraud",
-	"penipuan",
-	"denda",
-	"phk",
-	"melemah",
-	"koreksi dalam",
-	"restatement",
-	"investigasi",
-	"gorengan",
-	"unusual market",
-	"delisting",
-	"pkpu",
-	"pailit",
-	"korupsi",
-	"kpk",
-	"gagal",
-	"turun tajam",
-	"diragukan",
-	"banjir",
-	"kecelakaan"
-];
-function scoreHeadlines(headlines) {
-	if (!headlines.length) return {
-		sentiment: 50,
-		tags: []
-	};
-	let acc = 50;
-	const tags = [];
-	for (const h of headlines) {
-		const t = h.title.toLowerCase();
-		for (const w of POSITIVE) if (t.includes(w)) {
-			acc += 7;
-			if (tags.length < 2) tags.push(w);
-		}
-		for (const w of NEGATIVE) if (t.includes(w)) {
-			acc -= 11;
-			if (tags.length < 3) tags.push(w);
-		}
+function emaSeries(values, period) {
+	if (values.length < period) return null;
+	const k = 2 / (period + 1);
+	const out = new Array(values.length);
+	let acc = 0;
+	for (let i = 0; i < period; i++) acc += values[i];
+	acc /= period;
+	for (let i = 0; i < period - 1; i++) out[i] = acc;
+	out[period - 1] = acc;
+	for (let i = period; i < values.length; i++) {
+		acc = values[i] * k + acc * (1 - k);
+		out[i] = acc;
 	}
-	return {
-		sentiment: Math.max(12, Math.min(88, acc)),
-		tags
-	};
-}
-function sentimentLabel(score) {
-	if (score >= 68) return "positif";
-	if (score >= 55) return "agak positif";
-	if (score <= 32) return "negatif";
-	if (score <= 45) return "agak negatif";
-	return "netral";
+	return out;
 }
 function lastBarsSpark(bars, n = 24) {
 	const closes = bars.map((b) => b.c).filter((c) => Number.isFinite(c));
@@ -105,87 +38,72 @@ function round(n, digits = 0) {
 	const p = 10 ** digits;
 	return Math.round(n * p) / p;
 }
-async function mapPool$1(items, limit, fn) {
-	const out = new Array(items.length);
-	let cursor = 0;
-	async function worker() {
-		while (true) {
-			const i = cursor++;
-			if (i >= items.length) return;
-			out[i] = await fn(items[i]);
-		}
-	}
-	await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-	return out;
-}
-function decodeXml(s) {
-	return s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, "\"").replace(/&#39;/g, "'").replace(/'/g, "'");
-}
-function parseRss(xml, limit = 4) {
-	const items = xml.split(/<item>/i).slice(1, limit + 1);
-	const out = [];
-	for (const item of items) {
-		const title = item.match(/<title>([\s\S]*?)<\/title>/i)?.[1];
-		const source = item.match(/<source[^>]*>([\s\S]*?)<\/source>/i)?.[1] ?? item.match(/<dc:creator>([\s\S]*?)<\/dc:creator>/i)?.[1] ?? "Berita";
-		const date = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)?.[1] ?? "";
-		if (!title) continue;
-		const clean = decodeXml(title).replace(/\s+/g, " ").trim();
-		if (!clean) continue;
-		out.push({
-			title: clean.replace(/\s+-\s+[^-]+$/, ""),
-			source: decodeXml(source).trim(),
-			date: decodeXml(date).trim()
-		});
+function smaSeries(values, period) {
+	const out = Array(values.length).fill(null);
+	if (values.length < period) return out;
+	let sum = 0;
+	for (let i = 0; i < values.length; i++) {
+		sum += values[i];
+		if (i >= period) sum -= values[i - period];
+		if (i >= period - 1) out[i] = sum / period;
 	}
 	return out;
 }
-var newsCache = /* @__PURE__ */ new Map();
-var NEWS_TTL = 12e5;
-async function fetchHeadlines(symbol, name) {
-	const key = symbol;
-	const hit = newsCache.get(key);
-	if (hit && Date.now() - hit.at < NEWS_TTL) return hit.value;
-	const url = `https://news.google.com/rss/search?q=${encodeURIComponent(`${symbol} saham`)}&hl=id&gl=ID&ceid=ID:id`;
-	try {
-		const res = await fetch(url, {
-			headers: {
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-				Accept: "application/rss+xml, application/xml, text/xml"
-			},
-			signal: AbortSignal.timeout(2500)
-		});
-		if (!res.ok) {
-			newsCache.set(key, {
-				at: Date.now(),
-				value: []
-			});
-			return [];
-		}
-		const xml = await res.text();
-		const first = name.split(" ")[0].toUpperCase();
-		const headlines = parseRss(xml, 4).filter((h) => {
-			const t = h.title.toUpperCase();
-			return t.includes(symbol) || t.includes(first) || t.includes("SAHAM") || t.includes("IHSG") || t.includes("BEI");
-		});
-		const value = headlines.length ? headlines : parseRss(xml, 3);
-		newsCache.set(key, {
-			at: Date.now(),
-			value
-		});
-		return value;
-	} catch {
-		newsCache.set(key, {
-			at: Date.now(),
-			value: []
-		});
-		return [];
+function rsiSeries(values, period = 14) {
+	const out = Array(values.length).fill(null);
+	if (values.length < period + 1) return out;
+	let avgG = 0;
+	let avgL = 0;
+	for (let i = 1; i <= period; i++) {
+		const d = values[i] - values[i - 1];
+		if (d >= 0) avgG += d;
+		else avgL -= d;
 	}
+	avgG /= period;
+	avgL /= period;
+	out[period] = avgL === 0 ? 100 : 100 - 100 / (1 + avgG / avgL);
+	for (let i = period + 1; i < values.length; i++) {
+		const d = values[i] - values[i - 1];
+		avgG = (avgG * (period - 1) + (d > 0 ? d : 0)) / period;
+		avgL = (avgL * (period - 1) + (d < 0 ? -d : 0)) / period;
+		out[i] = avgL === 0 ? 100 : 100 - 100 / (1 + avgG / avgL);
+	}
+	return out;
 }
-async function fetchHeadlinesFor(stocks) {
-	const rows = await mapPool$1(stocks, 6, (s) => fetchHeadlines(s.symbol, s.name));
-	const map = /* @__PURE__ */ new Map();
-	stocks.forEach((s, i) => map.set(s.symbol, rows[i] ?? []));
-	return map;
+function atrSeries(bars, period = 14) {
+	const out = Array(bars.length).fill(null);
+	if (bars.length < period + 1) return out;
+	const trs = [0];
+	for (let i = 1; i < bars.length; i++) {
+		const b = bars[i];
+		const prev = bars[i - 1];
+		trs.push(Math.max(b.h - b.l, Math.abs(b.h - prev.c), Math.abs(b.l - prev.c)));
+	}
+	let acc = 0;
+	for (let i = 1; i <= period; i++) acc += trs[i];
+	acc /= period;
+	out[period] = acc;
+	for (let i = period + 1; i < bars.length; i++) {
+		acc = (acc * (period - 1) + trs[i]) / period;
+		out[i] = acc;
+	}
+	return out;
+}
+function macdHistSeries(values) {
+	const out = Array(values.length).fill(null);
+	const e12 = emaSeries(values, 12);
+	const e26 = emaSeries(values, 26);
+	if (!e12 || !e26) return out;
+	const line = [];
+	const idxs = [];
+	for (let i = 25; i < values.length; i++) {
+		line.push(e12[i] - e26[i]);
+		idxs.push(i);
+	}
+	const sig = emaSeries(line, 9);
+	if (!sig) return out;
+	for (let j = 8; j < line.length; j++) out[idxs[j]] = line[j] - sig[j];
+	return out;
 }
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 var TTL_MS = 72e4;
@@ -195,7 +113,7 @@ function fromCache(entry) {
 	if (Date.now() - entry.at > TTL_MS) return null;
 	return entry.value;
 }
-async function mapPool(items, limit, fn) {
+async function mapPool$1(items, limit, fn) {
 	const out = new Array(items.length);
 	let cursor = 0;
 	async function worker() {
@@ -296,9 +214,9 @@ async function fetchChart(symbol, range = "6mo") {
 	});
 	return bundle;
 }
-async function fetchCharts(symbols) {
+async function fetchCharts(symbols, range = "6mo", max = 12) {
 	try {
-		return (await mapPool(symbols.slice(0, 12), 5, async (symbol) => fetchChart(symbol))).filter((r) => r !== null);
+		return (await mapPool$1(symbols.slice(0, max), 6, async (symbol) => fetchChart(symbol, range))).filter((r) => r !== null);
 	} catch {
 		return [];
 	}
@@ -354,6 +272,486 @@ function marketStatus() {
 		status: "closed",
 		statusLabel: "Tutup"
 	};
+}
+var START = 1e8;
+var cache = /* @__PURE__ */ new Map();
+var TTL = 72e4;
+function downsample(points, max = 90) {
+	if (points.length <= max) return points;
+	const step = Math.ceil(points.length / max);
+	const out = [];
+	for (let i = 0; i < points.length; i += step) out.push(points[i]);
+	const last = points[points.length - 1];
+	if (out[out.length - 1]?.t !== last.t) out.push(last);
+	return out;
+}
+function rules(strategy) {
+	if (strategy === "intraday") return {
+		maxHold: 1,
+		stopMul: 1.05,
+		tgtMul: 1.6,
+		maxPos: 5,
+		warmup: 40
+	};
+	if (strategy === "swing") return {
+		maxHold: 12,
+		stopMul: 1.7,
+		tgtMul: 2.4,
+		maxPos: 8,
+		warmup: 60
+	};
+	return {
+		maxHold: 40,
+		stopMul: 2.4,
+		tgtMul: 3.2,
+		maxPos: 8,
+		warmup: 210
+	};
+}
+function prepare(chart) {
+	const bars = chart.bars.filter((b) => Number.isFinite(b.c) && b.c > 0);
+	if (bars.length < 40) return null;
+	const close = bars.map((b) => b.c);
+	const vol = bars.map((b) => b.v);
+	const volSma = smaSeries(vol, 10);
+	const rvol = vol.map((v, i) => {
+		const avg = volSma[i];
+		return avg && avg > 0 ? v / avg : null;
+	});
+	return {
+		symbol: chart.symbol,
+		name: UNIVERSE_BY_SYMBOL.get(chart.symbol)?.name ?? chart.name,
+		bars,
+		close,
+		sma20: smaSeries(close, 20),
+		sma50: smaSeries(close, 50),
+		sma200: smaSeries(close, 200),
+		ema9: emaSeries(close, 9),
+		rsi: rsiSeries(close, 14),
+		macd: macdHistSeries(close),
+		atr: atrSeries(bars, 14),
+		rvol,
+		byT: new Map(bars.map((b, i) => [b.t, i]))
+	};
+}
+function signal(strategy, p, i) {
+	const price = p.close[i];
+	const rsi = p.rsi[i];
+	const sma20 = p.sma20[i];
+	const sma50 = p.sma50[i];
+	const sma200 = p.sma200[i];
+	const ema9 = p.ema9?.[i];
+	const macd = p.macd[i];
+	const rvol = p.rvol[i];
+	if (strategy === "intraday") {
+		if (ema9 == null || sma20 == null || rsi == null) return null;
+		if (price < ema9 || price < sma20) return null;
+		if (rsi < 38 || rsi > 70) return null;
+		if (rvol != null && rvol < 1.1) return null;
+		return "Momentum harian di atas EMA9/SMA20";
+	}
+	if (strategy === "swing") {
+		if (sma20 == null || sma50 == null || rsi == null || macd == null) return null;
+		if (price < sma20 || price < sma50) return null;
+		if (macd <= 0) return null;
+		if (rsi < 42 || rsi > 68) return null;
+		return "Tren SMA20/50 + MACD positif";
+	}
+	if (sma50 == null || sma200 == null || rsi == null) return null;
+	if (price < sma200 || sma50 < sma200) return null;
+	if (rsi > 68) return null;
+	const window = p.close.slice(Math.max(0, i - 251), i + 1);
+	const hi = Math.max(...window);
+	if (hi > 0 && price / hi > .92) return null;
+	return "Di atas SMA200, tren menengah positif";
+}
+function shouldExit(strategy, p, i) {
+	const price = p.close[i];
+	if (strategy === "intraday") return true;
+	if (strategy === "swing") {
+		const sma20 = p.sma20[i];
+		const macd = p.macd[i];
+		return sma20 != null && price < sma20 || macd != null && macd < 0;
+	}
+	const sma200 = p.sma200[i];
+	return sma200 != null && price < sma200;
+}
+function simulate(strategy, books, ihsg) {
+	const spec = rules(strategy);
+	const times = [...new Set(books.flatMap((b) => b.bars.map((x) => x.t)))].sort((a, b) => a - b);
+	const cashStart = START;
+	let cash = cashStart;
+	const opens = [];
+	const pending = /* @__PURE__ */ new Map();
+	const cooldown = /* @__PURE__ */ new Map();
+	const trades = [];
+	const equity = [];
+	const bookBySym = new Map(books.map((b) => [b.symbol, b]));
+	const mark = (t) => {
+		let v = cash;
+		for (const pos of opens) {
+			const book = bookBySym.get(pos.symbol);
+			const idx = book?.byT.get(t);
+			const px = idx != null ? book.close[idx] : pos.entry;
+			v += pos.shares * px;
+		}
+		return v;
+	};
+	const closePos = (pos, t, price, why) => {
+		const proceeds = pos.shares * price * .9985;
+		cash += proceeds;
+		const retPct = (price * .9985 / (pos.entry * 1.0015) - 1) * 100;
+		trades.push({
+			symbol: pos.symbol,
+			name: pos.name,
+			entryDate: pos.entryT,
+			exitDate: t,
+			entry: pos.entry,
+			exit: price,
+			retPct,
+			reason: pos.reason,
+			exitReason: why,
+			holdDays: Math.max(1, pos.barsHeld)
+		});
+		cooldown.set(pos.symbol, t);
+	};
+	for (const t of times) {
+		for (let i = opens.length - 1; i >= 0; i--) {
+			const pos = opens[i];
+			const book = bookBySym.get(pos.symbol);
+			const idx = book?.byT.get(t);
+			if (idx == null || !book) continue;
+			const bar = book.bars[idx];
+			pos.barsHeld += 1;
+			let exitPx = null;
+			let why = null;
+			if (bar.l <= pos.stop) {
+				exitPx = Math.min(bar.o, pos.stop);
+				why = "stop";
+			} else if (bar.h >= pos.target) {
+				exitPx = pos.target;
+				why = "target";
+			} else if (pos.barsHeld >= pos.maxHold) {
+				exitPx = bar.c;
+				why = "time";
+			} else if (shouldExit(strategy, book, idx) && pos.barsHeld >= 1) {
+				exitPx = bar.c;
+				why = "signal";
+			}
+			if (exitPx != null && why) {
+				closePos(pos, t, exitPx, why);
+				opens.splice(i, 1);
+			}
+		}
+		for (const book of books) {
+			const idx = book.byT.get(t);
+			if (idx == null) continue;
+			const queued = pending.get(book.symbol);
+			if (!queued) continue;
+			pending.delete(book.symbol);
+			if (opens.some((p) => p.symbol === book.symbol)) continue;
+			if (opens.length >= spec.maxPos) continue;
+			const bar = book.bars[idx];
+			const atr = book.atr[idx] && book.atr[idx] > 0 ? book.atr[idx] : bar.c * .02;
+			const slots = spec.maxPos - opens.length;
+			const alloc = cash / slots * .98;
+			const fill = bar.o * 1.0015;
+			if (alloc < fill * 100) continue;
+			const shares = Math.floor(alloc / fill);
+			if (shares <= 0) continue;
+			cash -= shares * fill;
+			const stop = fill / 1.0015 - atr * spec.stopMul;
+			const target = fill / 1.0015 + atr * spec.tgtMul;
+			opens.push({
+				symbol: book.symbol,
+				name: book.name,
+				shares,
+				entry: fill / 1.0015,
+				entryT: t,
+				stop,
+				target,
+				maxHold: spec.maxHold,
+				barsHeld: 0,
+				reason: queued.reason
+			});
+		}
+		if (opens.length < spec.maxPos) for (const book of books) {
+			if (opens.length >= spec.maxPos) break;
+			if (opens.some((p) => p.symbol === book.symbol) || pending.has(book.symbol)) continue;
+			const idx = book.byT.get(t);
+			if (idx == null || idx < spec.warmup) continue;
+			const lastExit = cooldown.get(book.symbol);
+			if (lastExit != null) {
+				const lastIdx = book.byT.get(lastExit);
+				if (lastIdx != null && idx - lastIdx < 5) continue;
+			}
+			const why = signal(strategy, book, idx);
+			if (why) pending.set(book.symbol, {
+				symbol: book.symbol,
+				reason: why
+			});
+		}
+		if (t >= (times[spec.warmup] ?? times[0])) equity.push({
+			t,
+			v: mark(t)
+		});
+	}
+	for (const pos of [...opens]) {
+		const book = bookBySym.get(pos.symbol);
+		const last = book?.bars[book.bars.length - 1];
+		if (last) closePos(pos, last.t, last.c, "time");
+	}
+	opens.length = 0;
+	const finalEquity = equity[equity.length - 1]?.v ?? cash;
+	const totalReturn = (finalEquity - cashStart) / cashStart * 100;
+	const wins = trades.filter((x) => x.retPct > 0);
+	const losses = trades.filter((x) => x.retPct <= 0);
+	const sumW = wins.reduce((a, b) => a + b.retPct, 0);
+	const sumL = Math.abs(losses.reduce((a, b) => a + b.retPct, 0));
+	let peak = cashStart;
+	let maxDd = 0;
+	for (const p of equity) {
+		peak = Math.max(peak, p.v);
+		if (peak > 0) maxDd = Math.max(maxDd, (peak - p.v) / peak * 100);
+	}
+	let vsBuyHold = null;
+	if (ihsg && ihsg.bars.length > spec.warmup) {
+		const first = ihsg.bars[spec.warmup]?.c ?? ihsg.bars[0].c;
+		const last = ihsg.bars[ihsg.bars.length - 1].c;
+		if (first > 0) vsBuyHold = totalReturn - (last - first) / first * 100;
+	}
+	const grouped = /* @__PURE__ */ new Map();
+	for (const tr of trades) {
+		const arr = grouped.get(tr.symbol) ?? [];
+		arr.push(tr);
+		grouped.set(tr.symbol, arr);
+	}
+	const bySymbol = [...grouped.entries()].map(([symbol, rows]) => {
+		const w = rows.filter((r) => r.retPct > 0).length;
+		const ret = rows.reduce((a, b) => a + b.retPct, 0);
+		return {
+			symbol,
+			name: rows[0].name,
+			trades: rows.length,
+			winRate: rows.length ? w / rows.length * 100 : 0,
+			retPct: ret
+		};
+	}).sort((a, b) => b.retPct - a.retPct).slice(0, 8);
+	return {
+		strategy,
+		sector: "Semua",
+		lookback: "1y",
+		asOf: Date.now(),
+		scanned: books.length,
+		used: books.length,
+		trades: trades.slice(-50).reverse(),
+		equity: downsample(equity),
+		metrics: {
+			totalReturn,
+			winRate: trades.length ? wins.length / trades.length * 100 : 0,
+			trades: trades.length,
+			wins: wins.length,
+			losses: losses.length,
+			avgWin: wins.length ? sumW / wins.length : 0,
+			avgLoss: losses.length ? -sumL / losses.length : 0,
+			profitFactor: sumL > 0 ? sumW / sumL : wins.length ? 99 : 0,
+			maxDrawdown: maxDd,
+			avgHoldDays: trades.length ? trades.reduce((a, b) => a + b.holdDays, 0) / trades.length : 0,
+			vsBuyHold,
+			finalEquity,
+			startEquity: cashStart
+		},
+		bySymbol
+	};
+}
+async function runBacktest(input) {
+	const strategy = input.strategy;
+	const lookback = input.lookback;
+	const sector = input.sector && input.sector !== "Semua" ? input.sector : "Semua";
+	const key = `${strategy}:${lookback}:${sector}`;
+	const hit = cache.get(key);
+	if (hit && Date.now() - hit.at < TTL) return hit.value;
+	const symbols = pickBacktestSymbols(sector, 24);
+	const [charts, ihsg] = await Promise.all([fetchCharts(symbols, lookback, 24), fetchChart("^JKSE", lookback)]);
+	if (charts.length < 6) throw new Error("Data historis tidak cukup untuk backtest. Coba lagi beberapa saat.");
+	const books = charts.map(prepare).filter((p) => p !== null);
+	const result = simulate(strategy, books, ihsg);
+	result.strategy = strategy;
+	result.lookback = lookback;
+	result.sector = sector;
+	result.scanned = symbols.length;
+	result.used = books.length;
+	result.note = lookback === "6mo" && strategy === "invest" ? "Investasi butuh SMA200 — periode 6 bulan terlalu pendek, sinyal terbatas." : books.length < 12 ? "Sebagian emiten gagal diunduh; hasil memakai papan yang tersedia." : strategy === "intraday" ? "Intraday dites di close harian (hold 1 sesi berikutnya), bukan tick per menit." : void 0;
+	cache.set(key, {
+		at: Date.now(),
+		value: result
+	});
+	return result;
+}
+var POSITIVE = [
+	"laba",
+	"untung",
+	"dividen",
+	"ekspansi",
+	"kontrak",
+	"kerja sama",
+	"kerjasama",
+	"menguat",
+	"meroket",
+	"rekor",
+	"buyback",
+	"upgrade",
+	"rekomendasi beli",
+	"pertumbuhan",
+	"positif",
+	"di atas ekspektasi",
+	"kalahkan",
+	"capex",
+	"oversubscribe",
+	"breakout",
+	"sentimen positif",
+	"naik signifikan",
+	"raih"
+];
+var NEGATIVE = [
+	"rugi",
+	"merugi",
+	"gagal bayar",
+	"default",
+	"suspensi",
+	"suspend",
+	"fraud",
+	"penipuan",
+	"denda",
+	"phk",
+	"melemah",
+	"koreksi dalam",
+	"restatement",
+	"investigasi",
+	"gorengan",
+	"unusual market",
+	"delisting",
+	"pkpu",
+	"pailit",
+	"korupsi",
+	"kpk",
+	"gagal",
+	"turun tajam",
+	"diragukan",
+	"banjir",
+	"kecelakaan"
+];
+function scoreHeadlines(headlines) {
+	if (!headlines.length) return {
+		sentiment: 50,
+		tags: []
+	};
+	let acc = 50;
+	const tags = [];
+	for (const h of headlines) {
+		const t = h.title.toLowerCase();
+		for (const w of POSITIVE) if (t.includes(w)) {
+			acc += 7;
+			if (tags.length < 2) tags.push(w);
+		}
+		for (const w of NEGATIVE) if (t.includes(w)) {
+			acc -= 11;
+			if (tags.length < 3) tags.push(w);
+		}
+	}
+	return {
+		sentiment: Math.max(12, Math.min(88, acc)),
+		tags
+	};
+}
+function sentimentLabel(score) {
+	if (score >= 68) return "positif";
+	if (score >= 55) return "agak positif";
+	if (score <= 32) return "negatif";
+	if (score <= 45) return "agak negatif";
+	return "netral";
+}
+async function mapPool(items, limit, fn) {
+	const out = new Array(items.length);
+	let cursor = 0;
+	async function worker() {
+		while (true) {
+			const i = cursor++;
+			if (i >= items.length) return;
+			out[i] = await fn(items[i]);
+		}
+	}
+	await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+	return out;
+}
+function decodeXml(s) {
+	return s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, "\"").replace(/&#39;/g, "'").replace(/'/g, "'");
+}
+function parseRss(xml, limit = 4) {
+	const items = xml.split(/<item>/i).slice(1, limit + 1);
+	const out = [];
+	for (const item of items) {
+		const title = item.match(/<title>([\s\S]*?)<\/title>/i)?.[1];
+		const source = item.match(/<source[^>]*>([\s\S]*?)<\/source>/i)?.[1] ?? item.match(/<dc:creator>([\s\S]*?)<\/dc:creator>/i)?.[1] ?? "Berita";
+		const date = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)?.[1] ?? "";
+		if (!title) continue;
+		const clean = decodeXml(title).replace(/\s+/g, " ").trim();
+		if (!clean) continue;
+		out.push({
+			title: clean.replace(/\s+-\s+[^-]+$/, ""),
+			source: decodeXml(source).trim(),
+			date: decodeXml(date).trim()
+		});
+	}
+	return out;
+}
+var newsCache = /* @__PURE__ */ new Map();
+var NEWS_TTL = 12e5;
+async function fetchHeadlines(symbol, name) {
+	const key = symbol;
+	const hit = newsCache.get(key);
+	if (hit && Date.now() - hit.at < NEWS_TTL) return hit.value;
+	const url = `https://news.google.com/rss/search?q=${encodeURIComponent(`${symbol} saham`)}&hl=id&gl=ID&ceid=ID:id`;
+	try {
+		const res = await fetch(url, {
+			headers: {
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+				Accept: "application/rss+xml, application/xml, text/xml"
+			},
+			signal: AbortSignal.timeout(2500)
+		});
+		if (!res.ok) {
+			newsCache.set(key, {
+				at: Date.now(),
+				value: []
+			});
+			return [];
+		}
+		const xml = await res.text();
+		const first = name.split(" ")[0].toUpperCase();
+		const headlines = parseRss(xml, 4).filter((h) => {
+			const t = h.title.toUpperCase();
+			return t.includes(symbol) || t.includes(first) || t.includes("SAHAM") || t.includes("IHSG") || t.includes("BEI");
+		});
+		const value = headlines.length ? headlines : parseRss(xml, 3);
+		newsCache.set(key, {
+			at: Date.now(),
+			value
+		});
+		return value;
+	} catch {
+		newsCache.set(key, {
+			at: Date.now(),
+			value: []
+		});
+		return [];
+	}
+}
+async function fetchHeadlinesFor(stocks) {
+	const rows = await mapPool(stocks, 6, (s) => fetchHeadlines(s.symbol, s.name));
+	const map = /* @__PURE__ */ new Map();
+	stocks.forEach((s, i) => map.set(s.symbol, rows[i] ?? []));
+	return map;
 }
 var TV_URL = "https://scanner.tradingview.com/indonesia/scan";
 var COLUMNS = [
@@ -1079,6 +1477,11 @@ var strategySchema = _enum([
 	"swing",
 	"invest"
 ]);
+var lookbackSchema = _enum([
+	"6mo",
+	"1y",
+	"2y"
+]);
 var getMarketOverview_createServerFn_handler = createServerRpc({
 	id: "188d632fbf615078a692c25743dd576addb6c625e679120cf0a02b872af73ecd",
 	name: "getMarketOverview",
@@ -1098,5 +1501,41 @@ var runScreen = createServerFn({ method: "POST" }).validator((input) => object({
 }).parse(input)).handler(runScreen_createServerFn_handler, async ({ data }) => {
 	return runScreening(data);
 });
+var getQuotes_createServerFn_handler = createServerRpc({
+	id: "765611b3632ae0a729aafd72c1f6f1412018add583950a4f05378361c1ccd7ac",
+	name: "getQuotes",
+	filename: "src/lib/screener/actions.ts"
+}, (opts) => getQuotes.__executeServer(opts));
+var getQuotes = createServerFn({ method: "POST" }).validator((input) => object({ symbols: array(string().min(1).max(12)).max(80) }).parse(input)).handler(getQuotes_createServerFn_handler, async ({ data }) => {
+	const want = new Set(data.symbols.map(bareSymbol));
+	const snaps = await fetchIdxSnapshots();
+	const quotes = [];
+	for (const s of snaps) {
+		if (!want.has(s.symbol)) continue;
+		quotes.push({
+			symbol: s.symbol,
+			name: s.name,
+			sector: s.sector,
+			price: s.price,
+			changePct: s.changePct,
+			prevClose: s.prevClose,
+			volume: s.volume,
+			value: s.value
+		});
+	}
+	return quotes;
+});
+var runBacktestFn_createServerFn_handler = createServerRpc({
+	id: "15c8f22f741e68b1e8de96535b5cdc1f4be31d59c834918178aead72f7da7d29",
+	name: "runBacktestFn",
+	filename: "src/lib/screener/actions.ts"
+}, (opts) => runBacktestFn.__executeServer(opts));
+var runBacktestFn = createServerFn({ method: "POST" }).validator((input) => object({
+	strategy: strategySchema,
+	lookback: lookbackSchema,
+	sector: string().optional()
+}).parse(input)).handler(runBacktestFn_createServerFn_handler, async ({ data }) => {
+	return runBacktest(data);
+});
 //#endregion
-export { getMarketOverview_createServerFn_handler, runScreen_createServerFn_handler };
+export { getMarketOverview_createServerFn_handler, getQuotes_createServerFn_handler, runBacktestFn_createServerFn_handler, runScreen_createServerFn_handler };

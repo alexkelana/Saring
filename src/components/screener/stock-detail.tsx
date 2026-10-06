@@ -1,21 +1,28 @@
 "use client";
 
-import { Star, X } from "lucide-react";
+import { Bell, Star, Wallet, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { RangeBar } from "@/components/screener/range-bar";
 import { Sparkline } from "@/components/screener/sparkline";
+import { useDesk } from "@/lib/screener/desk-store";
 import {
   formatCompactIDR,
+  formatIDR,
+  formatLots,
   formatMultiple,
   formatPct,
   formatPrice,
   formatRoe,
+  LOT,
 } from "@/lib/screener/format";
 import { STRATEGIES } from "@/lib/screener/strategies";
 import { useScreener } from "@/lib/screener/store";
-import type { StockResult } from "@/lib/screener/types";
+import type { StockResult, StrategyId } from "@/lib/screener/types";
 import { cn } from "@/lib/utils";
 
 function FactorBar({ label, value }: { label: string; value: number }) {
@@ -197,6 +204,97 @@ export function StockDetail({ stock, onClose }: { stock: StockResult; onClose: (
           </ul>
         </div>
       ) : null}
+
+      <DeskActions stock={stock} strategy={strategy} />
+    </div>
+  );
+}
+
+function DeskActions({ stock, strategy }: { stock: StockResult; strategy: StrategyId }) {
+  const addAlert = useDesk((s) => s.addAlert);
+  const addPosition = useDesk((s) => s.addPosition);
+  const [lots, setLots] = useState("1");
+  const [openBuy, setOpenBuy] = useState(false);
+
+  const alertAt = (kind: "above" | "below", value: number, label: string) => {
+    addAlert({ symbol: stock.symbol, name: stock.name, kind, value });
+    toast.message(`Alert ${stock.symbol}`, {
+      description: `${label} ${formatPrice(value)}`,
+    });
+  };
+
+  const buy = () => {
+    const n = Number(lots);
+    if (!Number.isFinite(n) || n <= 0) {
+      toast.message("Lot tidak valid.");
+      return;
+    }
+    addPosition({
+      symbol: stock.symbol,
+      name: stock.name,
+      sector: stock.sector,
+      shares: n * LOT,
+      avgPrice: stock.price,
+      strategy,
+      stop: stock.levels.stop,
+      target: stock.levels.target,
+    });
+    setOpenBuy(false);
+    toast.message(`${stock.symbol} masuk portofolio`, {
+      description: `${formatLots(n * LOT)} @ ${formatPrice(stock.price)} · ${formatIDR(n * LOT * stock.price)}`,
+    });
+  };
+
+  return (
+    <div className="mt-6 space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="subtle"
+          size="sm"
+          className="h-11"
+          onClick={() => alertAt("above", stock.levels.target, "di atas target")}
+        >
+          <Bell className="size-4" />
+          Alert target
+        </Button>
+        <Button
+          variant="subtle"
+          size="sm"
+          className="h-11"
+          onClick={() => alertAt("below", stock.levels.stop, "di bawah stop")}
+        >
+          <Bell className="size-4" />
+          Alert stop
+        </Button>
+      </div>
+      {openBuy ? (
+        <div className="rounded-2xl bg-secondary p-3">
+          <label className="text-xs uppercase tracking-wide text-muted-foreground" htmlFor="lot-buy">
+            Lot (100 lembar)
+          </label>
+          <div className="mt-2 flex gap-2">
+            <Input
+              id="lot-buy"
+              type="number"
+              min={0.01}
+              value={lots}
+              onChange={(e) => setLots(e.target.value)}
+              className="h-11"
+            />
+            <Button className="h-11" onClick={buy}>
+              Beli
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Estimasi {formatIDR((Number(lots) || 0) * LOT * stock.price)}
+          </p>
+        </div>
+      ) : (
+        <Button className="h-11 w-full" onClick={() => setOpenBuy(true)}>
+          <Wallet className="size-4" />
+          Masuk portofolio
+        </Button>
+      )}
     </div>
   );
 }
