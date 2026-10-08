@@ -1,9 +1,20 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ScreenResult, StrategyId } from "./types";
+import type { ScreenResult, StrategyId, Verdict } from "./types";
 
 export type SortKey = "score" | "change" | "value" | "rsi";
 export type VerdictFilter = "all" | "beli" | "pertimbangkan" | "tunggu";
+
+export type RadarRow = {
+  symbol: string;
+  name: string;
+  verdict: Verdict;
+};
+
+export type Radar = {
+  strategy: StrategyId;
+  rows: RadarRow[];
+};
 
 type ScreenerState = {
   strategy: StrategyId;
@@ -14,6 +25,7 @@ type ScreenerState = {
   result: ScreenResult | null;
   selected: string | null;
   watchlist: string[];
+  radar: Radar | null;
   error: string | null;
   setStrategy: (strategy: StrategyId) => void;
   setSector: (sector: string) => void;
@@ -37,6 +49,7 @@ export const useScreener = create<ScreenerState>()(
       result: null,
       selected: null,
       watchlist: [],
+      radar: null,
       error: null,
       setStrategy: (strategy) => set({ strategy }),
       setSector: (sector) => set({ sector }),
@@ -44,7 +57,22 @@ export const useScreener = create<ScreenerState>()(
       setSort: (sort) => set({ sort }),
       setVerdictFilter: (verdictFilter) => set({ verdictFilter }),
       setResult: (result) =>
-        set({ result, selected: result?.results[0]?.symbol ?? null, error: null, verdictFilter: "all" }),
+        set({
+          result,
+          selected: result?.results[0]?.symbol ?? null,
+          error: null,
+          verdictFilter: "all",
+          radar: result
+            ? {
+                strategy: result.strategy,
+                rows: result.results.map((r) => ({
+                  symbol: r.symbol,
+                  name: r.name,
+                  verdict: r.verdict,
+                })),
+              }
+            : get().radar,
+        }),
       setSelected: (selected) => set({ selected }),
       setError: (error) => set({ error }),
       toggleWatch: (symbol) => {
@@ -56,7 +84,7 @@ export const useScreener = create<ScreenerState>()(
     }),
     {
       name: "saring-v2",
-      partialize: (s) => ({ watchlist: s.watchlist, strategy: s.strategy }),
+      partialize: (s) => ({ watchlist: s.watchlist, strategy: s.strategy, radar: s.radar }),
     },
   ),
 );

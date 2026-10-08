@@ -229,6 +229,7 @@ export type BacktestResult = {
   equity: EquityPoint[];
   metrics: BacktestMetrics;
   bySymbol: BacktestSymbolRow[];
+  symbols: string[];
   note?: string;
 };
 

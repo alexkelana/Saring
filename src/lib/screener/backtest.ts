@@ -15,7 +15,7 @@ import type {
   Ohlcv,
   StrategyId,
 } from "./types";
-import { UNIVERSE_BY_SYMBOL, pickBacktestSymbols } from "./universe";
+import { UNIVERSE_BY_SYMBOL, bareSymbol, pickBacktestSymbols } from "./universe";
 import { fetchChart, fetchCharts } from "./yahoo";
 
 const FEE = 0.0015;
@@ -349,6 +349,7 @@ function simulate(strategy: StrategyId, books: Prepared[], ihsg?: ChartBundle | 
       startEquity: cashStart,
     },
     bySymbol,
+    symbols: books.map((b) => b.symbol),
   };
 }
 
@@ -356,20 +357,29 @@ export async function runBacktest(input: {
   strategy: StrategyId;
   lookback: Lookback;
   sector?: string;
+  symbols?: string[];
 }): Promise<BacktestResult> {
   const strategy = input.strategy;
   const lookback = input.lookback;
   const sector = input.sector && input.sector !== "Semua" ? input.sector : "Semua";
-  const key = `${strategy}:${lookback}:${sector}`;
+  const custom = [
+    ...new Set(
+      (input.symbols ?? [])
+        .map((s) => bareSymbol(s))
+        .filter((s) => /^[A-Z0-9]{2,8}$/.test(s)),
+    ),
+  ].slice(0, 12);
+  const key = `${strategy}:${lookback}:${sector}:${custom.join(",")}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL) return hit.value;
 
-  const symbols = pickBacktestSymbols(sector, 12);
+  const symbols = custom.length ? custom : pickBacktestSymbols(sector, 12);
   const [charts, ihsg] = await Promise.all([
-    fetchCharts(symbols, lookback, 12),
+    fetchCharts(symbols, lookback, symbols.length),
     fetchChart("^JKSE", lookback),
   ]);
-  if (charts.length < 6) {
+  const minCharts = custom.length ? 1 : 6;
+  if (charts.length < minCharts) {
     throw new Error("Data historis tidak cukup untuk backtest. Coba lagi beberapa saat.");
   }
 
@@ -378,13 +388,14 @@ export async function runBacktest(input: {
   result.strategy = strategy;
   result.lookback = lookback;
   result.sector = sector;
+  result.symbols = books.map((b) => b.symbol);
   result.scanned = symbols.length;
   result.used = books.length;
   result.note =
     lookback === "6mo" && strategy === "invest"
       ? "Investasi butuh SMA200 — periode 6 bulan terlalu pendek, sinyal terbatas."
-      : books.length < 12
-        ? "Sebagian emiten gagal diunduh; hasil memakai papan yang tersedia."
+      : books.length < symbols.length
+        ? "Sebagian emiten gagal diunduh; hasil memakai yang tersedia."
         : strategy === "intraday"
           ? "Intraday dites di close harian (hold 1 sesi berikutnya), bukan tick per menit."
           : undefined;

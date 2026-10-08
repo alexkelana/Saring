@@ -61,6 +61,7 @@ export const runBacktestFn = createServerFn({ method: "POST" })
         strategy: strategySchema,
         lookback: lookbackSchema,
         sector: z.string().optional(),
+        symbols: z.array(z.string().min(1).max(12)).max(12).optional(),
       })
       .parse(input),
   )
