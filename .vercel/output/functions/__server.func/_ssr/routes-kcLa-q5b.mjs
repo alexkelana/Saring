@@ -10,8 +10,8 @@ import { n as toast } from "../_libs/sonner.mjs";
 import { n as Button, r as cn, t as AppShell } from "./app-shell-CQ7g93Be.mjs";
 import { t as Badge } from "./badge-Bov-DEDP.mjs";
 import { t as Input } from "./input-BszirhD1.mjs";
-import { n as Route$2 } from "./router-BUBUd77Q.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-DjN6KB0-.js
+import { n as Route$2 } from "./router-DCMqvfuV.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-kcLa-q5b.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function RangeBar({ low, high, value, className }) {

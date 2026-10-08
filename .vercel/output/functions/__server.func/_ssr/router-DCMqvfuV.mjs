@@ -7,7 +7,7 @@ import { c as formatPrice, d as getQuotes, h as useDesk, s as formatPct, u as ge
 import { r as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { n as toast, t as Toaster } from "../_libs/sonner.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-BUBUd77Q.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-DCMqvfuV.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var __defProp = Object.defineProperty;
@@ -490,12 +490,12 @@ var Route$3 = createRootRoute({
 		})]
 	})
 });
-var $$splitComponentImporter$2 = () => import("./routes-DjN6KB0-.mjs");
+var $$splitComponentImporter$2 = () => import("./routes-kcLa-q5b.mjs");
 var Route$2 = createFileRoute("/")({
 	loader: () => getMarketOverview(),
 	component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-var $$splitComponentImporter$1 = () => import("./backtest-Boh5SXW1.mjs");
+var $$splitComponentImporter$1 = () => import("./backtest-BDe7HYVw.mjs");
 var Route$1 = createFileRoute("/backtest")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
 var $$splitComponentImporter = () => import("./portfolio-BlSBuQGH.mjs");
 var Route = createFileRoute("/portfolio")({ component: lazyRouteComponent($$splitComponentImporter, "component") });

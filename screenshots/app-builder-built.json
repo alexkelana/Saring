@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Saring",
+      "hasCanvas": false,
+      "bodyTextLen": 1264,
+      "bodyTextHash": "611bccdace95620c7b366ab4b1dc940c57dcf6103363301e5670603d188d3bc8",
+      "bodyTextPrefix": "SCREENER SAHAM BEI saring IHSG 6.147 -0.75% Pra-pembukaan · Kam,",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Saring",
+      "hasCanvas": false,
+      "bodyTextLen": 1264,
+      "bodyTextHash": "611bccdace95620c7b366ab4b1dc940c57dcf6103363301e5670603d188d3bc8",
+      "bodyTextPrefix": "SCREENER SAHAM BEI saring IHSG 6.147 -0.75% Pra-pembukaan · Kam,",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}

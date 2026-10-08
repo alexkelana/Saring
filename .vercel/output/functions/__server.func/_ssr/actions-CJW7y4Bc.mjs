@@ -2,7 +2,7 @@ import { n as TSS_SERVER_FUNCTION, t as createServerFn } from "./ssr.mjs";
 import { a as mapSector, i as cleanName, n as STRATEGIES, o as sizeFromMcap } from "./strategies-BJmMjwBP.mjs";
 import { a as pickBacktestSymbols, i as bareSymbol, o as yahooSymbol, r as UNIVERSE_BY_SYMBOL } from "./universe-CuRQ4irm.mjs";
 import { a as object, n as array, o as string, t as _enum } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/actions-BqBZOD4J.js
+//#region node_modules/.nitro/vite/services/ssr/assets/actions-CJW7y4Bc.js
 var createServerRpc = (serverFnMeta, splitImportFn) => {
 	const url = "/_serverFn/" + serverFnMeta.id;
 	return Object.assign(splitImportFn, {
@@ -147,7 +147,7 @@ async function fetchChart(symbol, range = "6mo") {
 	const key = `${y}:${range}`;
 	const hit = fromCache(chartCache.get(key));
 	if (hit !== null) return hit;
-	const result = (await fetchJson(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(y)}?range=${range}&interval=1d&events=div`, 4e3))?.chart?.result?.[0];
+	const result = (await fetchJson(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(y)}?range=${range}&interval=1d&events=div`, 6e3))?.chart?.result?.[0];
 	if (!result?.timestamp?.length || !result.indicators?.quote?.[0]) {
 		chartCache.set(key, {
 			at: Date.now(),
@@ -571,8 +571,8 @@ async function runBacktest(input) {
 	const key = `${strategy}:${lookback}:${sector}`;
 	const hit = cache.get(key);
 	if (hit && Date.now() - hit.at < TTL) return hit.value;
-	const symbols = pickBacktestSymbols(sector, 24);
-	const [charts, ihsg] = await Promise.all([fetchCharts(symbols, lookback, 24), fetchChart("^JKSE", lookback)]);
+	const symbols = pickBacktestSymbols(sector, 12);
+	const [charts, ihsg] = await Promise.all([fetchCharts(symbols, lookback, 12), fetchChart("^JKSE", lookback)]);
 	if (charts.length < 6) throw new Error("Data historis tidak cukup untuk backtest. Coba lagi beberapa saat.");
 	const books = charts.map(prepare).filter((p) => p !== null);
 	const result = simulate(strategy, books, ihsg);

@@ -7,7 +7,7 @@ import { l as ArrowUpRight, s as LoaderCircle } from "../_libs/lucide-react.mjs"
 import { n as toast } from "../_libs/sonner.mjs";
 import { n as Button, r as cn, t as AppShell } from "./app-shell-CQ7g93Be.mjs";
 import { t as Badge } from "./badge-Bov-DEDP.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/backtest-Boh5SXW1.js
+//#region node_modules/.nitro/vite/services/ssr/assets/backtest-BDe7HYVw.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function EquityChart({ series, className }) {
@@ -105,8 +105,9 @@ function BacktestView() {
 			setResult(data);
 			toast.message(`Backtest ${STRATEGIES[strategy].label} selesai`, { description: `${data.metrics.trades} transaksi di ${data.used} emiten.` });
 		},
-		onError: () => {
-			toast.message("Backtest gagal. Coba beberapa saat lagi.");
+		onError: (err) => {
+			const msg = err instanceof Error && err.message ? err.message : "Backtest gagal. Coba beberapa saat lagi.";
+			toast.message(msg);
 		}
 	});
 	const item = STRATEGIES[strategy];
@@ -196,6 +197,10 @@ function BacktestView() {
 					className: "shimmer-text mt-2 text-sm",
 					children: "Sinyal, fill, stop, dan target dihitung per sesi…"
 				})]
+			}) : null,
+			mutation.isError && !mutation.isPending ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-6 rounded-2xl bg-down/10 px-4 py-3 text-sm text-down",
+				children: "Screening historis gagal diunduh. Coba lagi — Yahoo kadang membatasi request bersamaan."
 			}) : null,
 			result && m && !mutation.isPending ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mt-8 space-y-5",
