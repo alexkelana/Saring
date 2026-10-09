@@ -2,7 +2,7 @@ import { n as TSS_SERVER_FUNCTION, t as createServerFn } from "./ssr.mjs";
 import { a as mapSector, i as cleanName, n as STRATEGIES, o as sizeFromMcap } from "./strategies-BJmMjwBP.mjs";
 import { a as pickBacktestSymbols, i as bareSymbol, o as yahooSymbol, r as UNIVERSE_BY_SYMBOL } from "./universe-CuRQ4irm.mjs";
 import { a as object, n as array, o as string, t as _enum } from "../_libs/zod.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/actions-CJW7y4Bc.js
+//#region node_modules/.nitro/vite/services/ssr/assets/actions-BHWy-5KE.js
 var createServerRpc = (serverFnMeta, splitImportFn) => {
 	const url = "/_serverFn/" + serverFnMeta.id;
 	return Object.assign(splitImportFn, {
@@ -561,27 +561,31 @@ function simulate(strategy, books, ihsg) {
 			finalEquity,
 			startEquity: cashStart
 		},
-		bySymbol
+		bySymbol,
+		symbols: books.map((b) => b.symbol)
 	};
 }
 async function runBacktest(input) {
 	const strategy = input.strategy;
 	const lookback = input.lookback;
 	const sector = input.sector && input.sector !== "Semua" ? input.sector : "Semua";
-	const key = `${strategy}:${lookback}:${sector}`;
+	const custom = [...new Set((input.symbols ?? []).map((s) => bareSymbol(s)).filter((s) => /^[A-Z0-9]{2,8}$/.test(s)))].slice(0, 12);
+	const key = `${strategy}:${lookback}:${sector}:${custom.join(",")}`;
 	const hit = cache.get(key);
 	if (hit && Date.now() - hit.at < TTL) return hit.value;
-	const symbols = pickBacktestSymbols(sector, 12);
-	const [charts, ihsg] = await Promise.all([fetchCharts(symbols, lookback, 12), fetchChart("^JKSE", lookback)]);
-	if (charts.length < 6) throw new Error("Data historis tidak cukup untuk backtest. Coba lagi beberapa saat.");
+	const symbols = custom.length ? custom : pickBacktestSymbols(sector, 12);
+	const [charts, ihsg] = await Promise.all([fetchCharts(symbols, lookback, symbols.length), fetchChart("^JKSE", lookback)]);
+	const minCharts = custom.length ? 1 : 6;
+	if (charts.length < minCharts) throw new Error("Data historis tidak cukup untuk backtest. Coba lagi beberapa saat.");
 	const books = charts.map(prepare).filter((p) => p !== null);
 	const result = simulate(strategy, books, ihsg);
 	result.strategy = strategy;
 	result.lookback = lookback;
 	result.sector = sector;
+	result.symbols = books.map((b) => b.symbol);
 	result.scanned = symbols.length;
 	result.used = books.length;
-	result.note = lookback === "6mo" && strategy === "invest" ? "Investasi butuh SMA200 — periode 6 bulan terlalu pendek, sinyal terbatas." : books.length < 12 ? "Sebagian emiten gagal diunduh; hasil memakai papan yang tersedia." : strategy === "intraday" ? "Intraday dites di close harian (hold 1 sesi berikutnya), bukan tick per menit." : void 0;
+	result.note = lookback === "6mo" && strategy === "invest" ? "Investasi butuh SMA200 — periode 6 bulan terlalu pendek, sinyal terbatas." : books.length < symbols.length ? "Sebagian emiten gagal diunduh; hasil memakai yang tersedia." : strategy === "intraday" ? "Intraday dites di close harian (hold 1 sesi berikutnya), bukan tick per menit." : void 0;
 	cache.set(key, {
 		at: Date.now(),
 		value: result
@@ -1533,7 +1537,8 @@ var runBacktestFn_createServerFn_handler = createServerRpc({
 var runBacktestFn = createServerFn({ method: "POST" }).validator((input) => object({
 	strategy: strategySchema,
 	lookback: lookbackSchema,
-	sector: string().optional()
+	sector: string().optional(),
+	symbols: array(string().min(1).max(12)).max(12).optional()
 }).parse(input)).handler(runBacktestFn_createServerFn_handler, async ({ data }) => {
 	return runBacktest(data);
 });

@@ -3,11 +3,11 @@ import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].
 import { S as useRouter, _ as Outlet, b as createRootRoute, f as Scripts, g as createRouter, p as HeadContent, v as lazyRouteComponent, y as createFileRoute } from "../_libs/@tanstack/react-router+[...].mjs";
 import { i as require_jsx_runtime, n as useQuery, r as QueryClientProvider } from "../_libs/react+tanstack__react-query.mjs";
 import { a as object, i as number, o as string, r as literal, s as union } from "../_libs/zod.mjs";
-import { c as formatPrice, d as getQuotes, h as useDesk, s as formatPct, u as getMarketOverview } from "./format-CtGhOwOb.mjs";
+import { c as formatPrice, d as getQuotes, h as useDesk, s as formatPct, u as getMarketOverview } from "./format-D9QnCTLo.mjs";
 import { r as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
 import { n as toast, t as Toaster } from "../_libs/sonner.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-DCMqvfuV.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-BiQJOvLQ.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var __defProp = Object.defineProperty;
@@ -436,7 +436,7 @@ function PreviewHostBridge() {
 function AuthProvider({ children }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children });
 }
-var styles_default = "/assets/styles-BXyv2Wqz.css";
+var styles_default = "/assets/styles-DzxUXy08.css";
 var APP_NAME = "Saring";
 var Route$3 = createRootRoute({
 	head: () => ({
@@ -490,14 +490,14 @@ var Route$3 = createRootRoute({
 		})]
 	})
 });
-var $$splitComponentImporter$2 = () => import("./routes-kcLa-q5b.mjs");
+var $$splitComponentImporter$2 = () => import("./routes-FAzX7zh8.mjs");
 var Route$2 = createFileRoute("/")({
 	loader: () => getMarketOverview(),
 	component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-var $$splitComponentImporter$1 = () => import("./backtest-BDe7HYVw.mjs");
+var $$splitComponentImporter$1 = () => import("./backtest-dOjXLeih.mjs");
 var Route$1 = createFileRoute("/backtest")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
-var $$splitComponentImporter = () => import("./portfolio-BlSBuQGH.mjs");
+var $$splitComponentImporter = () => import("./portfolio-r0KAhicm.mjs");
 var Route = createFileRoute("/portfolio")({ component: lazyRouteComponent($$splitComponentImporter, "component") });
 var rootRouteChildren = {
 	IndexRoute: Route$2.update({

@@ -2,12 +2,13 @@ import { i as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { i as require_jsx_runtime, t as useMutation } from "../_libs/react+tanstack__react-query.mjs";
 import { n as STRATEGIES, r as STRATEGY_ORDER, t as SECTORS } from "./strategies-BJmMjwBP.mjs";
-import { c as formatPrice, n as formatDateShort, p as runBacktestFn, r as formatIDR, s as formatPct } from "./format-CtGhOwOb.mjs";
+import { n as UNIVERSE, r as UNIVERSE_BY_SYMBOL } from "./universe-CuRQ4irm.mjs";
+import { c as formatPrice, n as formatDateShort, p as runBacktestFn, r as formatIDR, s as formatPct } from "./format-D9QnCTLo.mjs";
 import { l as ArrowUpRight, s as LoaderCircle } from "../_libs/lucide-react.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
-import { n as Button, r as cn, t as AppShell } from "./app-shell-CQ7g93Be.mjs";
-import { t as Badge } from "./badge-Bov-DEDP.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/backtest-BDe7HYVw.js
+import { i as cn, n as Button, r as Input, t as AppShell } from "./input-DVtXPBQL.mjs";
+import { n as useScreener, t as Badge } from "./store-lMaAVxFV.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/backtest-dOjXLeih.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function EquityChart({ series, className }) {
@@ -84,6 +85,29 @@ var LOOKBACKS = [
 		label: "2 tahun"
 	}
 ];
+var BASKETS = [
+	{
+		id: "liquid",
+		label: "Likuid"
+	},
+	{
+		id: "beli",
+		label: "Beli"
+	},
+	{
+		id: "timbang",
+		label: "Timbang"
+	},
+	{
+		id: "saved",
+		label: "Disimpan"
+	},
+	{
+		id: "manual",
+		label: "Manual"
+	}
+];
+var MAX_PICKS = 12;
 var EXIT_LABEL = {
 	target: "Target",
 	stop: "Stop",
@@ -94,12 +118,51 @@ function BacktestView() {
 	const [strategy, setStrategy] = (0, import_react.useState)("swing");
 	const [lookback, setLookback] = (0, import_react.useState)("1y");
 	const [sector, setSector] = (0, import_react.useState)("Semua");
+	const [basket, setBasket] = (0, import_react.useState)("liquid");
+	const [picked, setPicked] = (0, import_react.useState)([]);
+	const [query, setQuery] = (0, import_react.useState)("");
 	const [result, setResult] = (0, import_react.useState)(null);
+	const radar = useScreener((s) => s.radar);
+	const watchlist = useScreener((s) => s.watchlist);
+	const candidates = (0, import_react.useMemo)(() => {
+		if (basket === "beli" || basket === "timbang") {
+			const verdict = basket === "beli" ? "beli" : "pertimbangkan";
+			return (radar?.rows ?? []).filter((r) => r.verdict === verdict).slice(0, MAX_PICKS);
+		}
+		if (basket === "saved") return watchlist.slice(0, MAX_PICKS).map((symbol) => ({
+			symbol,
+			name: UNIVERSE_BY_SYMBOL.get(symbol)?.name ?? symbol
+		}));
+		return [];
+	}, [
+		basket,
+		radar,
+		watchlist
+	]);
+	(0, import_react.useEffect)(() => {
+		if (basket === "manual" || basket === "liquid") {
+			setPicked([]);
+			setQuery("");
+			return;
+		}
+		setPicked(candidates.map((c) => c.symbol));
+	}, [basket, candidates]);
+	const matches = (0, import_react.useMemo)(() => {
+		const s = query.trim().toUpperCase();
+		if (basket !== "manual" || s.length < 1) return [];
+		return UNIVERSE.filter((u) => !picked.includes(u.symbol) && (u.symbol.includes(s) || u.name.toUpperCase().includes(s))).slice(0, 6);
+	}, [
+		query,
+		basket,
+		picked
+	]);
+	const canRun = basket === "liquid" || picked.length > 0;
 	const mutation = useMutation({
 		mutationFn: () => runBacktestFn({ data: {
 			strategy,
 			lookback,
-			sector
+			sector: basket === "liquid" ? sector : "Semua",
+			symbols: basket === "liquid" ? void 0 : picked
 		} }),
 		onSuccess: (data) => {
 			setResult(data);
@@ -110,8 +173,23 @@ function BacktestView() {
 			toast.message(msg);
 		}
 	});
+	const run = () => {
+		if (!canRun) {
+			toast.message("Pilih minimal satu emiten.");
+			return;
+		}
+		mutation.mutate();
+	};
+	const toggle = (symbol) => {
+		if (!picked.includes(symbol) && picked.length >= MAX_PICKS) {
+			toast.message(`Maksimal ${MAX_PICKS} emiten.`);
+			return;
+		}
+		setPicked((cur) => cur.includes(symbol) ? cur.filter((s) => s !== symbol) : [...cur, symbol]);
+	};
 	const item = STRATEGIES[strategy];
 	const m = result?.metrics;
+	const emptyCopy = basket === "beli" ? "Belum ada saham Beli. Jalankan screening dulu, lalu kembali ke sini." : basket === "timbang" ? "Belum ada saham Timbang. Jalankan screening dulu." : basket === "saved" ? "Belum ada yang disimpan. Bintang di detail saham, atau pilih manual." : "Cari kode, lalu ketuk untuk memasukkan. Maksimal 12 emiten.";
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AppShell, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 		className: "saring-enter-2 mt-8",
 		children: [
@@ -126,9 +204,9 @@ function BacktestView() {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 				className: "mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground",
 				children: [
-					"Menjalankan aturan ",
+					"Aturan ",
 					item.label.toLowerCase(),
-					" di emiten likuid BEI, modal virtual Rp 100 juta, biaya 0,15% per sisi. Bukan jaminan kinerja masa depan."
+					" dijalankan pada emiten yang dipilih. Modal virtual Rp 100 juta, biaya 0,15% per sisi. Bukan jaminan kinerja masa depan."
 				]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -151,6 +229,96 @@ function BacktestView() {
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-5",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs uppercase tracking-wide text-muted-foreground",
+						children: "Emiten"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "mt-2 flex flex-wrap gap-1.5",
+						children: BASKETS.map((b) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: () => setBasket(b.id),
+							className: cn("inline-flex h-11 items-center rounded-full px-4 text-sm", basket === b.id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"),
+							children: b.label
+						}, b.id))
+					}),
+					basket !== "liquid" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "mt-3",
+						children: [
+							basket === "manual" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "relative max-w-sm",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+									value: query,
+									onChange: (e) => setQuery(e.target.value),
+									placeholder: "Kode atau nama",
+									"aria-label": "Cari emiten untuk backtest",
+									autoComplete: "off"
+								}), matches.length ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+									className: "absolute z-10 mt-1 w-full overflow-hidden rounded-2xl bg-popover shadow-[var(--shadow-border)]",
+									children: matches.map((u) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+										type: "button",
+										className: "flex min-h-11 w-full items-baseline justify-between gap-2 px-4 py-2.5 text-left text-sm hover:bg-accent",
+										onClick: () => {
+											toggle(u.symbol);
+											setQuery("");
+										},
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "font-medium",
+											children: u.symbol
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "truncate text-muted-foreground",
+											children: u.name
+										})]
+									}) }, u.symbol))
+								}) : null]
+							}) : null,
+							basket !== "manual" && radar && (basket === "beli" || basket === "timbang") ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-2 text-xs text-muted-foreground",
+								children: [
+									"Dari screening ",
+									STRATEGIES[radar.strategy].label,
+									". Ketuk untuk keluarkan."
+								]
+							}) : null,
+							candidates.length === 0 && basket !== "manual" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-3 text-sm text-muted-foreground",
+								children: emptyCopy
+							}) : null,
+							picked.length || basket === "manual" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "mt-3 flex flex-wrap gap-1.5",
+								children: (basket === "manual" ? picked.map((symbol) => ({
+									symbol,
+									name: UNIVERSE_BY_SYMBOL.get(symbol)?.name ?? symbol
+								})) : candidates).map((row) => {
+									const on = picked.includes(row.symbol);
+									if (basket === "manual" && !on) return null;
+									return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										title: row.name,
+										onClick: () => toggle(row.symbol),
+										className: cn("inline-flex h-11 items-center rounded-full px-4 font-mono text-sm", on ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"),
+										children: row.symbol
+									}, row.symbol);
+								})
+							}) : null,
+							basket === "manual" && picked.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-3 text-sm text-muted-foreground",
+								children: emptyCopy
+							}) : null,
+							picked.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-2 text-xs text-muted-foreground",
+								children: [picked.length, " emiten ikut diuji"]
+							}) : null
+						]
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-2 text-xs text-muted-foreground",
+						children: "12 emiten paling likuid di sektor yang dipilih."
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mt-5 flex flex-col gap-3 lg:flex-row lg:items-center",
 				children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -162,12 +330,11 @@ function BacktestView() {
 							children: l.label
 						}, l.id))
 					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+					basket === "liquid" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
 						className: "sr-only",
 						htmlFor: "bt-sektor",
 						children: "Sektor"
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
 						id: "bt-sektor",
 						value: sector,
 						onChange: (e) => setSector(e.target.value),
@@ -179,11 +346,11 @@ function BacktestView() {
 							value: s,
 							children: s
 						}, s))]
-					}),
+					})] }) : null,
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
 						className: "h-11 min-w-[11rem]",
-						onClick: () => mutation.mutate(),
-						disabled: mutation.isPending,
+						onClick: run,
+						disabled: mutation.isPending || !canRun,
 						children: [mutation.isPending ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, { className: "size-4 animate-spin" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowUpRight, { className: "size-4" }), mutation.isPending ? "Mensimulasi…" : "Jalankan backtest"]
 					})
 				]
@@ -345,7 +512,8 @@ function BacktestView() {
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
 						className: "mt-7",
-						onClick: () => mutation.mutate(),
+						onClick: run,
+						disabled: !canRun,
 						children: ["Jalankan backtest", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowUpRight, { className: "size-4" })]
 					})
 				]

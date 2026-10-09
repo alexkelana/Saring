@@ -3,15 +3,13 @@ import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].
 import { i as require_jsx_runtime, n as useQuery, t as useMutation } from "../_libs/react+tanstack__react-query.mjs";
 import { n as STRATEGIES, r as STRATEGY_ORDER, t as SECTORS } from "./strategies-BJmMjwBP.mjs";
 import { t as MOSAIC } from "./universe-CuRQ4irm.mjs";
-import { n as create, t as persist } from "../_libs/zustand.mjs";
-import { a as formatLots, c as formatPrice, h as useDesk, i as formatJakarta, l as formatRoe, m as runScreen, o as formatMultiple, r as formatIDR, s as formatPct, t as formatCompactIDR, u as getMarketOverview } from "./format-CtGhOwOb.mjs";
+import { a as formatLots, c as formatPrice, h as useDesk, i as formatJakarta, l as formatRoe, m as runScreen, o as formatMultiple, r as formatIDR, s as formatPct, t as formatCompactIDR, u as getMarketOverview } from "./format-D9QnCTLo.mjs";
 import { a as Search, c as Bell, i as Star, l as ArrowUpRight, n as Wallet, s as LoaderCircle, t as X } from "../_libs/lucide-react.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
-import { n as Button, r as cn, t as AppShell } from "./app-shell-CQ7g93Be.mjs";
-import { t as Badge } from "./badge-Bov-DEDP.mjs";
-import { t as Input } from "./input-BszirhD1.mjs";
-import { n as Route$2 } from "./router-DCMqvfuV.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-kcLa-q5b.js
+import { i as cn, n as Button, r as Input, t as AppShell } from "./input-DVtXPBQL.mjs";
+import { n as useScreener, t as Badge } from "./store-lMaAVxFV.mjs";
+import { n as Route$2 } from "./router-BiQJOvLQ.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-FAzX7zh8.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function RangeBar({ low, high, value, className }) {
@@ -114,40 +112,6 @@ function Separator({ className }) {
 		role: "separator"
 	});
 }
-var useScreener = create()(persist((set, get) => ({
-	strategy: "swing",
-	sector: "Semua",
-	query: "",
-	sort: "score",
-	verdictFilter: "all",
-	result: null,
-	selected: null,
-	watchlist: [],
-	error: null,
-	setStrategy: (strategy) => set({ strategy }),
-	setSector: (sector) => set({ sector }),
-	setQuery: (query) => set({ query }),
-	setSort: (sort) => set({ sort }),
-	setVerdictFilter: (verdictFilter) => set({ verdictFilter }),
-	setResult: (result) => set({
-		result,
-		selected: result?.results[0]?.symbol ?? null,
-		error: null,
-		verdictFilter: "all"
-	}),
-	setSelected: (selected) => set({ selected }),
-	setError: (error) => set({ error }),
-	toggleWatch: (symbol) => {
-		const cur = get().watchlist;
-		set({ watchlist: cur.includes(symbol) ? cur.filter((s) => s !== symbol) : [...cur, symbol] });
-	}
-}), {
-	name: "saring-v2",
-	partialize: (s) => ({
-		watchlist: s.watchlist,
-		strategy: s.strategy
-	})
-}));
 function FactorBar({ label, value }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "space-y-1.5",

@@ -1,7 +1,7 @@
 import { n as TSS_SERVER_FUNCTION, r as getServerFnById, t as createServerFn } from "./ssr.mjs";
 import { a as object, n as array, o as string, t as _enum } from "../_libs/zod.mjs";
 import { n as create, t as persist } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/format-CtGhOwOb.js
+//#region node_modules/.nitro/vite/services/ssr/assets/format-D9QnCTLo.js
 var createSsrRpc = (functionId) => {
 	const url = "/_serverFn/" + functionId;
 	const serverFnMeta = { id: functionId };
@@ -33,7 +33,8 @@ var getQuotes = createServerFn({ method: "POST" }).validator((input) => object({
 var runBacktestFn = createServerFn({ method: "POST" }).validator((input) => object({
 	strategy: strategySchema,
 	lookback: lookbackSchema,
-	sector: string().optional()
+	sector: string().optional(),
+	symbols: array(string().min(1).max(12)).max(12).optional()
 }).parse(input)).handler(createSsrRpc("15c8f22f741e68b1e8de96535b5cdc1f4be31d59c834918178aead72f7da7d29"));
 function nid() {
 	return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
